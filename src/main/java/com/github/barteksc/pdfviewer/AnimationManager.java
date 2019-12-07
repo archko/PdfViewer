@@ -22,7 +22,8 @@ import android.animation.ValueAnimator;
 import android.animation.ValueAnimator.AnimatorUpdateListener;
 import android.graphics.PointF;
 import android.view.animation.DecelerateInterpolator;
-import android.widget.OverScroller;
+
+import cn.archko.pdf.widgets.Flinger;
 
 
 /**
@@ -37,7 +38,7 @@ class AnimationManager {
 
     private ValueAnimator animation;
 
-    private OverScroller scroller;
+    private Flinger scroller;
 
     private boolean flinging = false;
 
@@ -45,7 +46,7 @@ class AnimationManager {
 
     public AnimationManager(PDFView pdfView) {
         this.pdfView = pdfView;
-        scroller = new OverScroller(pdfView.getContext());
+        scroller = new Flinger();// new OverScroller(pdfView.getContext());
     }
 
     public void startXAnimation(float xFrom, float xTo) {
