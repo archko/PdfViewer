@@ -1,0 +1,12 @@
+.svn
+/.idea
+/.gradle
+/build
+/*.iml
+/*.project
+/.settings
+/jni
+
+*.iml
+local.properties
+
