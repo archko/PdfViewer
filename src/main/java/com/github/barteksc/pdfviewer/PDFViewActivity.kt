@@ -307,6 +307,9 @@ public class PDFViewActivity : MuPDFRecyclerViewActivity(), OnPageChangeListener
     }
 
     override fun addGesture() {
+        if (null == gestureDetector) {
+            initTouchParams()
+        }
         mRecyclerView.setOnTouchListener { v, event ->
             gestureDetector!!.onTouchEvent(event)
             false
