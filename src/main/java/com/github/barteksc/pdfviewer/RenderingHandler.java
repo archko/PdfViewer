@@ -97,16 +97,16 @@ class RenderingHandler extends Handler {
             return null;
         }
 
-        Bitmap render;
-        try {
-            render = Bitmap.createBitmap(w, h, renderingTask.bestQuality ? Bitmap.Config.ARGB_8888 : Bitmap.Config.RGB_565);
-        } catch (IllegalArgumentException e) {
-            Log.e(TAG, "Cannot create bitmap", e);
-            return null;
-        }
+        //Bitmap render;
+        //try {
+        //    render = Bitmap.createBitmap(w, h, renderingTask.bestQuality ? Bitmap.Config.ARGB_8888 : Bitmap.Config.RGB_565);
+        //} catch (IllegalArgumentException e) {
+        //    Log.e(TAG, "Cannot create bitmap", e);
+        //    return null;
+        //}
         calculateBounds(w, h, renderingTask.bounds);
 
-        pdfFile.renderPageBitmap(render, renderingTask.page, roundedRenderBounds, renderingTask.annotationRendering);
+        Bitmap render = pdfFile.renderPageBitmap(renderingTask.page, renderingTask.autoCrop, roundedRenderBounds, renderingTask.annotationRendering);
 
         return new PagePart(renderingTask.page, render,
                 renderingTask.bounds, renderingTask.thumbnail,
@@ -146,6 +146,7 @@ class RenderingHandler extends Handler {
         boolean bestQuality;
 
         boolean annotationRendering;
+        boolean autoCrop = true;
 
         RenderingTask(float width, float height, RectF bounds, int page, boolean thumbnail, int cacheOrder, boolean bestQuality, boolean annotationRendering) {
             this.page = page;

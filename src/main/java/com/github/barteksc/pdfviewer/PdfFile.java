@@ -24,6 +24,10 @@ import android.util.SparseBooleanArray;
 import com.artifex.mupdf.fitz.Cookie;
 import com.artifex.mupdf.fitz.Document;
 import com.artifex.mupdf.fitz.Link;
+import com.artifex.mupdf.fitz.Matrix;
+import com.artifex.mupdf.fitz.Page;
+import com.artifex.mupdf.fitz.RectI;
+import com.artifex.mupdf.fitz.android.AndroidDrawDevice;
 import com.artifex.mupdf.viewer.MuPDFCore;
 import com.github.barteksc.pdfviewer.exception.PageRenderingException;
 import com.github.barteksc.pdfviewer.util.FitPolicy;
@@ -31,9 +35,14 @@ import com.github.barteksc.pdfviewer.util.PageSizeCalculator;
 import com.github.barteksc.pdfviewer.util.Size;
 import com.github.barteksc.pdfviewer.util.SizeF;
 
+import org.vudroid.core.BitmapPool;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
+import cn.archko.pdf.common.ImageWorker;
+import cn.archko.pdf.common.Logcat;
 
 class PdfFile {
 
@@ -41,31 +50,57 @@ class PdfFile {
     //private PdfDocument pdfDocument;
     private MuPDFCore pdfiumCore;
     private int pagesCount = 0;
-    /** Original page sizes */
+    /**
+     * Original page sizes
+     */
     private List<Size> originalPageSizes = new ArrayList<>();
-    /** Scaled page sizes */
+    /**
+     * Scaled page sizes
+     */
     private List<SizeF> pageSizes = new ArrayList<>();
-    /** Opened pages with indicator whether opening was successful */
+    /**
+     * Opened pages with indicator whether opening was successful
+     */
     private SparseBooleanArray openedPages = new SparseBooleanArray();
-    /** Page with maximum width */
+    /**
+     * Page with maximum width
+     */
     private Size originalMaxWidthPageSize = new Size(0, 0);
-    /** Page with maximum height */
+    /**
+     * Page with maximum height
+     */
     private Size originalMaxHeightPageSize = new Size(0, 0);
-    /** Scaled page with maximum height */
+    /**
+     * Scaled page with maximum height
+     */
     private SizeF maxHeightPageSize = new SizeF(0, 0);
-    /** Scaled page with maximum width */
+    /**
+     * Scaled page with maximum width
+     */
     private SizeF maxWidthPageSize = new SizeF(0, 0);
-    /** True if scrolling is vertical, else it's horizontal */
+    /**
+     * True if scrolling is vertical, else it's horizontal
+     */
     private boolean isVertical;
-    /** Fixed spacing between pages in pixels */
+    /**
+     * Fixed spacing between pages in pixels
+     */
     private int spacingPx;
-    /** Calculate spacing automatically so each page fits on it's own in the center of the view */
+    /**
+     * Calculate spacing automatically so each page fits on it's own in the center of the view
+     */
     private boolean autoSpacing;
-    /** Calculated offsets for pages */
+    /**
+     * Calculated offsets for pages
+     */
     private List<Float> pageOffsets = new ArrayList<>();
-    /** Calculated auto spacing for pages */
+    /**
+     * Calculated auto spacing for pages
+     */
     private List<Float> pageSpacing = new ArrayList<>();
-    /** Calculated document length (width or height, depending on swipe mode) */
+    /**
+     * Calculated document length (width or height, depending on swipe mode)
+     */
     private float documentLength = 0;
     private final FitPolicy pageFitPolicy;
     /**
@@ -101,7 +136,7 @@ class PdfFile {
 
         for (int i = 0; i < pagesCount; i++) {
             PointF pointF = pdfiumCore.getPageSize(/*pdfDocument, */documentPage(i));
-            Size pageSize=new Size((int)pointF.x, (int)pointF.y);
+            Size pageSize = new Size((int) pointF.x, (int) pointF.y);
             if (pageSize.getWidth() > originalMaxWidthPageSize.getWidth()) {
                 originalMaxWidthPageSize = pageSize;
             }
@@ -236,7 +271,9 @@ class PdfFile {
         return spacing * zoom;
     }
 
-    /** Get primary page offset, that is Y for vertical scroll and X for horizontal scroll */
+    /**
+     * Get primary page offset, that is Y for vertical scroll and X for horizontal scroll
+     */
     public float getPageOffset(int pageIndex, float zoom) {
         int docPage = documentPage(pageIndex);
         if (docPage < 0) {
@@ -245,7 +282,9 @@ class PdfFile {
         return pageOffsets.get(pageIndex) * zoom;
     }
 
-    /** Get secondary page offset, that is X for vertical scroll and Y for horizontal scroll */
+    /**
+     * Get secondary page offset, that is X for vertical scroll and Y for horizontal scroll
+     */
     public float getSecondaryPageOffset(int pageIndex, float zoom) {
         SizeF pageSize = getPageSize(pageIndex);
         if (isVertical) {
@@ -296,11 +335,11 @@ class PdfFile {
         return !openedPages.get(docPage, false);
     }
 
-    public void renderPageBitmap(Bitmap bitmap, int pageIndex, Rect bounds, boolean annotationRendering) {
-        int docPage = documentPage(pageIndex);
+    public Bitmap renderPageBitmap(int pageIndex, boolean autoCrop, Rect bounds, boolean annotationRendering) {
+        //int docPage = documentPage(pageIndex);
         //pdfiumCore.renderPageBitmap(pdfDocument, bitmap, docPage,
         //        bounds.left, bounds.top, bounds.width(), bounds.height(), annotationRendering);
-        pdfiumCore.drawPage(bitmap, pageIndex, bounds.width(), bounds.height(), 0, 0, 0, 0, new Cookie());
+        return draw(pageIndex, autoCrop, bounds.width(), bounds.height(), 0, 0);
     }
 
     //public Meta getMetaData() {
@@ -319,7 +358,7 @@ class PdfFile {
 
     public List<Link> getPageLinks(int pageIndex) {
         int docPage = documentPage(pageIndex);
-        Link[] links= pdfiumCore.getPageLinks(/*pdfDocument, */docPage);
+        Link[] links = pdfiumCore.getPageLinks(/*pdfDocument, */docPage);
         return Arrays.asList(links);
     }
 
@@ -382,5 +421,53 @@ class PdfFile {
 
     public Document getDocument() {
         return pdfiumCore.getDoc();
+    }
+
+    public Bitmap draw(int pageNum, boolean autoCrop,
+                       int pageW, int pageH,
+                       int patchX, int patchY) {
+        Page page = pdfiumCore.getDoc().loadPage(pageNum);
+
+        final float zoom = 160 / 72;
+        final Matrix ctm = new Matrix(zoom, zoom);
+        final RectI bbox = new RectI(page.getBounds().transform(ctm));
+        final float xscale = (float) pageW / (float) (bbox.x1 - bbox.x0);
+        final float yscale = (float) pageH / (float) (bbox.y1 - bbox.y0);
+        ctm.scale(xscale, yscale);
+
+        int leftBound = 0;
+        int topBound = 0;
+        int width = pageW;
+        int height = pageH;
+        if (autoCrop) {
+            int ratio = 6;
+            Bitmap thumb = BitmapPool.getInstance().acquire(pageW / ratio, pageH / ratio);
+            Matrix matrix = new Matrix(ctm.a / ratio, ctm.d / ratio);
+            ImageWorker.render(page, matrix, thumb, 0, leftBound, topBound);
+
+            RectF rectF = ImageWorker.getCropRect(thumb);
+
+            float scale = thumb.getWidth() / rectF.width();
+            leftBound = (int) (rectF.left * ratio * scale);
+            topBound = (int) (rectF.top * ratio * scale);
+
+            height = (int) (rectF.height() * ratio * scale);
+            ctm.scale(scale, scale);
+            //if (Logcat.loggable) {
+            //    Logcat.d(String.format("decode t:%s:%s:%s,thumb:%s=%s, rectF:%s", width, height, scale, thumb.getWidth(), thumb.getHeight(), rectF));
+            //}
+        }
+
+        //if (Logcat.loggable) {
+        //    Logcat.d(String.format("decode bitmap:width-height: %s-%s,pagesize:%s,%s, bound:%s,%s,%s",
+        //            width, height, pageW, pageH, leftBound, topBound, ctm));
+        //}
+
+        Bitmap bitmap = BitmapPool.getInstance().acquire(width, height);
+
+        ImageWorker.render(page, ctm, bitmap, 0, leftBound, topBound);
+
+        page.destroy();
+        return bitmap;
     }
 }
