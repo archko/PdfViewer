@@ -59,7 +59,7 @@ public class PDFViewActivity : MuPDFRecyclerViewActivity(), OnPageChangeListener
     private val OUTLINE_REQUEST = 0
     private var pdfBookmarkManager: PDFBookmarkManager? = null
     private var outlineHelper: OutlineHelper? = null
-    private var mZoomControls: PageViewZoomControls? = null
+    //private var mZoomControls: PageViewZoomControls? = null
     private var mStyleControls: View? = null
 
     private var mMenuHelper: MenuHelper? = null
@@ -153,6 +153,7 @@ public class PDFViewActivity : MuPDFRecyclerViewActivity(), OnPageChangeListener
 
         progressDialog.setMessage(mPath)
         progressDialog.show()
+        pdfView!!.zoomTo(pdfBookmarkManager!!.getBookmarkToRestore().zoomLevel / 1000f)
         pdfView!!.fromFile(File(mPath!!))
                 .defaultPage(pos)
                 .onPageChange(this)
@@ -274,7 +275,7 @@ public class PDFViewActivity : MuPDFRecyclerViewActivity(), OnPageChangeListener
         if (mReflow) {
             return mRecyclerView.scrollBy(scrollX, scrollY)
         } else {
-            return pdfView!!.scrollBy(scrollX, scrollY)
+            return pdfView!!.moveRelativeTo(-scrollX.toFloat(), -scrollY.toFloat())
         }
     }
 
@@ -358,7 +359,7 @@ public class PDFViewActivity : MuPDFRecyclerViewActivity(), OnPageChangeListener
             return
         }
         mPageSeekBarControls?.hide()
-        mZoomControls?.visibility = View.GONE
+        //mZoomControls?.visibility = View.GONE
         mStyleControls?.visibility = View.GONE
         if (!mDrawerLayout.isDrawerOpen(mLeftDrawer)) {
             mDrawerLayout.openDrawer(mLeftDrawer)
@@ -498,7 +499,7 @@ public class PDFViewActivity : MuPDFRecyclerViewActivity(), OnPageChangeListener
         super.onResume()
 
         mPageSeekBarControls?.hide()
-        mZoomControls?.hide()
+        //mZoomControls?.hide()
         mStyleControls?.visibility = View.GONE
         mDrawerLayout.closeDrawers()
     }
@@ -510,15 +511,20 @@ public class PDFViewActivity : MuPDFRecyclerViewActivity(), OnPageChangeListener
         } else {
             pdfBookmarkManager?.bookmarkToRestore?.autoCrop = 1
         }
+        var zoom = 1000.0f
         if (mReflow) {
+            if (zoomModel != null) {
+                zoom = zoomModel!!.zoom * 1000
+            }
             pdfBookmarkManager?.bookmarkToRestore?.reflow = 1
         } else {
+            zoom = pdfView?.zoom!! * 1000.0f
             pdfBookmarkManager?.bookmarkToRestore?.reflow = 0
         }
         val position = getCurrentPos()
-        Logcat.d("zoom:${pdfView?.getZoom()}")
-        if (mDocument != null && zoomModel != null) {
-            pdfBookmarkManager?.saveCurrentPage(mPath, mDocument!!.countPages(), position, zoomModel!!.zoom * 1000.0f, -1, 0)
+
+        if (mDocument != null) {
+            pdfBookmarkManager?.saveCurrentPage(mPath, mDocument!!.countPages(), position, zoom, -1, 0)
         }
         if (mReflow && null != mRecyclerView.adapter && mRecyclerView.adapter is MuPDFReflowAdapter) {
             (mRecyclerView.adapter as MuPDFReflowAdapter).clearCacheViews()
@@ -665,7 +671,7 @@ public class PDFViewActivity : MuPDFRecyclerViewActivity(), OnPageChangeListener
     }
 
     private fun showStyleFragment() {
-        mZoomControls?.hide()
+        //mZoomControls?.hide()
         mStyleControls?.visibility = View.VISIBLE
     }
 
@@ -691,7 +697,7 @@ public class PDFViewActivity : MuPDFRecyclerViewActivity(), OnPageChangeListener
                 }
                 TYPE_ZOOM -> {
                     mDrawerLayout.closeDrawer(mLeftDrawer)
-                    mZoomControls?.show()
+                    //mZoomControls?.show()
                     mStyleControls?.visibility = View.VISIBLE
                 }
                 TYPE_CLOSE -> {
