@@ -21,13 +21,11 @@ import android.graphics.Rect;
 import android.graphics.RectF;
 import android.util.SparseBooleanArray;
 
-import com.artifex.mupdf.fitz.Cookie;
 import com.artifex.mupdf.fitz.Document;
 import com.artifex.mupdf.fitz.Link;
 import com.artifex.mupdf.fitz.Matrix;
 import com.artifex.mupdf.fitz.Page;
 import com.artifex.mupdf.fitz.RectI;
-import com.artifex.mupdf.fitz.android.AndroidDrawDevice;
 import com.artifex.mupdf.viewer.MuPDFCore;
 import com.github.barteksc.pdfviewer.exception.PageRenderingException;
 import com.github.barteksc.pdfviewer.util.FitPolicy;
@@ -42,7 +40,6 @@ import java.util.Arrays;
 import java.util.List;
 
 import cn.archko.pdf.common.ImageWorker;
-import cn.archko.pdf.common.Logcat;
 
 class PdfFile {
 
@@ -335,11 +332,14 @@ class PdfFile {
         return !openedPages.get(docPage, false);
     }
 
-    public Bitmap renderPageBitmap(int pageIndex, boolean autoCrop, Rect bounds, boolean annotationRendering) {
+    public void renderPageBitmap(int pageIndex, boolean autoCrop, Rect bounds, boolean annotationRendering) {
         //int docPage = documentPage(pageIndex);
         //pdfiumCore.renderPageBitmap(pdfDocument, bitmap, docPage,
         //        bounds.left, bounds.top, bounds.width(), bounds.height(), annotationRendering);
-        return draw(pageIndex, autoCrop, bounds.width(), bounds.height(), 0, 0);
+    }
+
+    public Bitmap renderPageBitmap(RenderingHandler.RenderingTask task, Rect bounds) {
+        return nativeRender(task.page, task.autoCrop, bounds.width(), bounds.height(), 0, 0);
     }
 
     //public Meta getMetaData() {
@@ -423,9 +423,9 @@ class PdfFile {
         return pdfiumCore.getDoc();
     }
 
-    public Bitmap draw(int pageNum, boolean autoCrop,
-                       int pageW, int pageH,
-                       int patchX, int patchY) {
+    public Bitmap nativeRender(int pageNum, boolean autoCrop,
+                               int pageW, int pageH,
+                               int patchX, int patchY) {
         Page page = pdfiumCore.getDoc().loadPage(pageNum);
 
         final float zoom = 160 / 72;

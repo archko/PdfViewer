@@ -106,7 +106,7 @@ class RenderingHandler extends Handler {
         //}
         calculateBounds(w, h, renderingTask.bounds);
 
-        Bitmap render = pdfFile.renderPageBitmap(renderingTask.page, renderingTask.autoCrop, roundedRenderBounds, renderingTask.annotationRendering);
+        Bitmap render = pdfFile.renderPageBitmap(renderingTask, roundedRenderBounds);
 
         return new PagePart(renderingTask.page, render,
                 renderingTask.bounds, renderingTask.thumbnail,
@@ -131,7 +131,7 @@ class RenderingHandler extends Handler {
         running = true;
     }
 
-    private class RenderingTask {
+    class RenderingTask {
 
         float width, height;
 
