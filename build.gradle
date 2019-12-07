@@ -41,6 +41,6 @@ dependencies {
 
     api "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 
-    api project(":readercommon")
+    api project(":reader")
     api project(":viewer")
 }
