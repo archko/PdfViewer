@@ -36,6 +36,7 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.widget.RelativeLayout;
 
+import com.artifex.mupdf.fitz.Document;
 import com.artifex.mupdf.fitz.Link;
 import com.artifex.mupdf.viewer.MuPDFCore;
 import com.github.barteksc.pdfviewer.exception.PageRenderingException;
@@ -1319,6 +1320,10 @@ public class PDFView extends RelativeLayout {
     /** Use custom source as pdf source */
     public Configurator fromSource(DocumentSource docSource) {
         return new Configurator(docSource);
+    }
+
+    public Document getDocument(){
+        return pdfFile.getDocument();
     }
 
     private enum State {DEFAULT, LOADED, SHOWN, ERROR}

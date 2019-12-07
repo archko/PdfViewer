@@ -22,6 +22,7 @@ import android.graphics.RectF;
 import android.util.SparseBooleanArray;
 
 import com.artifex.mupdf.fitz.Cookie;
+import com.artifex.mupdf.fitz.Document;
 import com.artifex.mupdf.fitz.Link;
 import com.artifex.mupdf.viewer.MuPDFCore;
 import com.github.barteksc.pdfviewer.exception.PageRenderingException;
@@ -377,5 +378,9 @@ class PdfFile {
         }
 
         return documentPage;
+    }
+
+    public Document getDocument() {
+        return pdfiumCore.getDoc();
     }
 }
