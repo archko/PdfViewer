@@ -158,6 +158,10 @@ public class Callbacks {
         return onTapListener != null && onTapListener.onTap(event);
     }
 
+    public boolean callOnDoubleTap(MotionEvent event) {
+        return onTapListener != null && onTapListener.onDoubleTap(event);
+    }
+
     public void setOnLongPress(OnLongPressListener onLongPressListener) {
         this.onLongPressListener = onLongPressListener;
     }

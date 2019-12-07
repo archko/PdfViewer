@@ -142,13 +142,16 @@ class DragPinchManager implements GestureDetector.OnGestureListener, GestureDete
         if (!pdfView.isDoubletapEnabled()) {
             return false;
         }
+        boolean onTapHandled = pdfView.callbacks.callOnDoubleTap(e);
 
-        if (pdfView.getZoom() < pdfView.getMidZoom()) {
-            pdfView.zoomWithAnimation(e.getX(), e.getY(), pdfView.getMidZoom());
-        } else if (pdfView.getZoom() < pdfView.getMaxZoom()) {
-            pdfView.zoomWithAnimation(e.getX(), e.getY(), pdfView.getMaxZoom());
-        } else {
-            pdfView.resetZoomWithAnimation();
+        if (!onTapHandled) {
+            if (pdfView.getZoom() < pdfView.getMidZoom()) {
+                pdfView.zoomWithAnimation(e.getX(), e.getY(), pdfView.getMidZoom());
+            } else if (pdfView.getZoom() < pdfView.getMaxZoom()) {
+                pdfView.zoomWithAnimation(e.getX(), e.getY(), pdfView.getMaxZoom());
+            } else {
+                pdfView.resetZoomWithAnimation();
+            }
         }
         return true;
     }

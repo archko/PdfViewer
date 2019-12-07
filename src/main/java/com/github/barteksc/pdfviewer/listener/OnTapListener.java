@@ -30,4 +30,6 @@ public interface OnTapListener {
      * @return true if the single tap was handled, false to toggle scroll handle
      */
     boolean onTap(MotionEvent e);
+
+    boolean onDoubleTap(MotionEvent e);
 }

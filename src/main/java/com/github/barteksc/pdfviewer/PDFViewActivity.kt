@@ -7,7 +7,9 @@ import android.graphics.Color
 import android.os.Bundle
 import android.preference.PreferenceManager
 import android.text.TextUtils
+import android.view.MotionEvent
 import android.view.View
+import android.view.ViewConfiguration
 import android.view.ViewGroup
 import android.view.Window
 import android.widget.RelativeLayout
@@ -36,6 +38,7 @@ import cn.archko.pdf.widgets.ViewerDividerItemDecoration
 import com.github.barteksc.pdfviewer.listener.OnLoadCompleteListener
 import com.github.barteksc.pdfviewer.listener.OnPageChangeListener
 import com.github.barteksc.pdfviewer.listener.OnPageErrorListener
+import com.github.barteksc.pdfviewer.listener.OnTapListener
 import com.github.barteksc.pdfviewer.scroll.DefaultScrollHandle
 import org.vudroid.core.events.PageViewPresenter
 import org.vudroid.core.views.APageSeekBarControls
@@ -75,6 +78,7 @@ public class PDFViewActivity : MuPDFRecyclerViewActivity(), OnPageChangeListener
 
     private var mStyleHelper: StyleHelper? = null
     private val START_PROGRESS = 15
+    var margin = 10
 
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState);
@@ -133,28 +137,19 @@ public class PDFViewActivity : MuPDFRecyclerViewActivity(), OnPageChangeListener
             })
         }
 
-        initTouchParams()
+        if (margin <= 0) {
+            margin = ViewConfiguration.get(this).scaledTouchSlop * 2
+        } else {
+            margin = (margin * 0.03).toInt()
+        }
     }
 
     override fun loadDoc() {
     }
 
     private fun loadFromUri() {
-        pdfBookmarkManager = PDFBookmarkManager()
-        var ac = 0;
-        if (!autoCrop) {
-            ac = 1;
-        }
-        pdfBookmarkManager!!.setStartBookmark(mPath, ac)
-        val progress = pdfBookmarkManager?.bookmarkToRestore;
-        progress?.let {
-            autoCrop = it.autoCrop == 0;
-            mReflow = it.reflow == 1
-        }
-
-        addGesture()
-        autoCropModeSet(autoCrop)
-        var pos = pdfBookmarkManager?.getBookmark()!!
+        loadBookmark()
+        val pos = pdfBookmarkManager?.getBookmark()!!
 
         progressDialog.setMessage(mPath)
         progressDialog.show()
@@ -166,7 +161,26 @@ public class PDFViewActivity : MuPDFRecyclerViewActivity(), OnPageChangeListener
                 .scrollHandle(DefaultScrollHandle(this))
                 .spacing(10) // in dp
                 .onPageError(this)
+                .onTap(onTapListener)
                 .load();
+    }
+
+    private fun loadBookmark() {
+        pdfBookmarkManager = PDFBookmarkManager()
+        var ac = 0;
+        if (!autoCrop) {
+            ac = 1;
+        }
+        pdfBookmarkManager!!.setStartBookmark(mPath, ac)
+        val progress = pdfBookmarkManager?.bookmarkToRestore;
+        progress?.let {
+            autoCrop = it.autoCrop == 0;
+            mReflow = it.reflow == 1
+        }
+        setupView()
+
+        addGesture()
+        autoCropModeSet(autoCrop)
     }
 
     override fun onPageChanged(page: Int, pageCount: Int) {
@@ -230,22 +244,70 @@ public class PDFViewActivity : MuPDFRecyclerViewActivity(), OnPageChangeListener
     }
 
     //======================= ui =======================
+    private fun setupView() {
+        if (mReflow) {
+            mRecyclerView.visibility = View.VISIBLE
+            pdfView?.visibility = View.GONE
+        } else {
+            mRecyclerView.visibility = View.GONE
+            pdfView?.visibility = View.VISIBLE
+        }
+    }
+
+    private fun getViewHeight(): Int {
+        if (mReflow) {
+            return mRecyclerView.height
+        } else {
+            return pdfView!!.height
+        }
+    }
+
+    private fun getScrollY(): Int {
+        if (mReflow) {
+            return mRecyclerView.scrollY
+        } else {
+            return pdfView!!.scrollY
+        }
+    }
+
+    private fun scrollBy(scrollX: Int, scrollY: Int) {
+        if (mReflow) {
+            return mRecyclerView.scrollBy(scrollX, scrollY)
+        } else {
+            return pdfView!!.scrollBy(scrollX, scrollY)
+        }
+    }
+
+    var onTapListener = object : OnTapListener {
+        override fun onTap(e: MotionEvent): Boolean {
+            val height = getViewHeight()
+            var scrollY = getScrollY()
+            val top = height / 4
+            val bottom = height * 3 / 4
+
+            if (e.y.toInt() < top) {
+                scrollY = scrollY - height + margin
+                scrollBy(0, scrollY)
+                return true
+            } else if (e.y.toInt() > bottom) {
+                scrollY = scrollY + height - margin
+                scrollBy(0, scrollY)
+                return true
+            } else {
+                onSingleTap()
+            }
+            return true
+        }
+
+        override fun onDoubleTap(e: MotionEvent?): Boolean {
+            onDoubleTap()
+            return true
+        }
+    }
 
     override fun addGesture() {
         mRecyclerView.setOnTouchListener { v, event ->
             gestureDetector!!.onTouchEvent(event)
-            if (!mReflow) {
-                if (multiTouchZoom != null) {
-                    if (multiTouchZoom!!.onTouchEvent(event)) {
-                        return@setOnTouchListener true
-                    }
-
-                    if (multiTouchZoom!!.isResetLastPointAfterZoom()) {
-                        //setLastPosition(ev)
-                        multiTouchZoom!!.setResetLastPointAfterZoom(false)
-                    }
-                }
-            }
             false
         }
     }
@@ -258,6 +320,7 @@ public class PDFViewActivity : MuPDFRecyclerViewActivity(), OnPageChangeListener
     private fun reflowModeSet(reflow: Boolean) {
         val pos = getCurrentPos();
         mReflow = reflow
+        setupView()
         if (mReflow) {
             if (null == mStyleHelper) {
                 mStyleHelper = StyleHelper()
@@ -267,9 +330,6 @@ public class PDFViewActivity : MuPDFRecyclerViewActivity(), OnPageChangeListener
 
             addGesture()
         } else {
-            addGesture()
-
-            mRecyclerView.adapter = PDFRecyclerAdapter()
             mPageSeekBarControls?.reflowButton!!.setColorFilter(Color.argb(0xFF, 255, 255, 255))
         }
         if (pos > 0) {
@@ -381,7 +441,7 @@ public class PDFViewActivity : MuPDFRecyclerViewActivity(), OnPageChangeListener
             } else {
                 mPageSeekBarControls?.autoCropButton!!.setColorFilter(Color.argb(0xFF, 255, 255, 255))
             }
-            mRecyclerView.adapter?.notifyDataSetChanged()
+            pdfView?.invalidate()
             return true
         }
     }
@@ -397,7 +457,11 @@ public class PDFViewActivity : MuPDFRecyclerViewActivity(), OnPageChangeListener
     }
 
     override fun onSelectedOutline(resultCode: Int) {
-        mRecyclerView.layoutManager?.scrollToPosition(resultCode - RESULT_FIRST_USER)
+        if (mReflow) {
+            mRecyclerView.layoutManager?.scrollToPosition(resultCode - RESULT_FIRST_USER)
+        } else {
+            pdfView?.jumpTo(resultCode - RESULT_FIRST_USER)
+        }
         updateProgress(resultCode - RESULT_FIRST_USER)
     }
 
@@ -418,7 +482,12 @@ public class PDFViewActivity : MuPDFRecyclerViewActivity(), OnPageChangeListener
     }
 
     override fun getCurrentPos(): Int {
-        var position = (mRecyclerView.layoutManager as LinearLayoutManager).findFirstVisibleItemPosition()
+        var position = 0
+        if (mReflow) {
+            position = (mRecyclerView.layoutManager as LinearLayoutManager).findFirstVisibleItemPosition()
+        } else {
+            position = pdfView?.currentPage!!
+        }
         if (position < 0) {
             position = 0
         }
@@ -447,10 +516,11 @@ public class PDFViewActivity : MuPDFRecyclerViewActivity(), OnPageChangeListener
             pdfBookmarkManager?.bookmarkToRestore?.reflow = 0
         }
         val position = getCurrentPos()
+        Logcat.d("zoom:${pdfView?.getZoom()}")
         if (mDocument != null && zoomModel != null) {
             pdfBookmarkManager?.saveCurrentPage(mPath, mDocument!!.countPages(), position, zoomModel!!.zoom * 1000.0f, -1, 0)
         }
-        if (null != mRecyclerView.adapter && mRecyclerView.adapter is MuPDFReflowAdapter) {
+        if (mReflow && null != mRecyclerView.adapter && mRecyclerView.adapter is MuPDFReflowAdapter) {
             (mRecyclerView.adapter as MuPDFReflowAdapter).clearCacheViews()
         }
     }
