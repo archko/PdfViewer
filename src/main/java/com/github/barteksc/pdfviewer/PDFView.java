@@ -310,6 +310,7 @@ public class PDFView extends RelativeLayout {
 
         paint = new Paint();
         debugPaint = new Paint();
+        debugPaint.setColor(Color.parseColor("#dddddd"));
         debugPaint.setStyle(Style.STROKE);
 
         //pdfiumCore = new PdfiumCore(context);
@@ -774,6 +775,8 @@ public class PDFView extends RelativeLayout {
         }
 
         canvas.drawBitmap(renderedBitmap, srcRect, dstRect, paint);
+
+        canvas.drawLine(0,dstRect.height(), dstRect.width(), dstRect.height(), debugPaint);
 
         if (Constants.DEBUG_MODE) {
             debugPaint.setColor(part.getPage() % 2 == 0 ? Color.RED : Color.BLUE);
