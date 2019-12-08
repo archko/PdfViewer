@@ -162,6 +162,7 @@ public class PDFViewActivity : MuPDFRecyclerViewActivity(), OnPageChangeListener
                 .spacing(10) // in dp
                 .onPageError(this)
                 .onTap(onTapListener)
+                .autoCrop(autoCrop)
                 .load();
     }
 
@@ -185,6 +186,8 @@ public class PDFViewActivity : MuPDFRecyclerViewActivity(), OnPageChangeListener
 
     override fun onPageChanged(page: Int, pageCount: Int) {
         Logcat.d("onPageChanged:" + page + " pc:" + pageCount);
+
+        updateProgress(page)
     }
 
     override fun loadComplete(nbPages: Int) {
@@ -436,6 +439,7 @@ public class PDFViewActivity : MuPDFRecyclerViewActivity(), OnPageChangeListener
         if (flag) {
             autoCrop = !autoCrop;
         }
+        pdfView?.setAutoCrop(autoCrop)
     }
 
     private fun autoCropModeSet(autoCrop: Boolean): Boolean {

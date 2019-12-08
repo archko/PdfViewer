@@ -53,8 +53,8 @@ class RenderingHandler extends Handler {
         this.pdfView = pdfView;
     }
 
-    void addRenderingTask(int page, float width, float height, RectF bounds, boolean thumbnail, int cacheOrder, boolean bestQuality, boolean annotationRendering) {
-        RenderingTask task = new RenderingTask(width, height, bounds, page, thumbnail, cacheOrder, bestQuality, annotationRendering);
+    void addRenderingTask(int page, float width, float height, RectF bounds, boolean thumbnail, int cacheOrder, boolean bestQuality, boolean annotationRendering, boolean autoCrop) {
+        RenderingTask task = new RenderingTask(width, height, bounds, page, thumbnail, cacheOrder, bestQuality, annotationRendering, autoCrop);
         Message msg = obtainMessage(MSG_RENDER_TASK, task);
         sendMessage(msg);
     }
@@ -149,7 +149,8 @@ class RenderingHandler extends Handler {
         boolean annotationRendering;
         boolean autoCrop = true;
 
-        RenderingTask(float width, float height, RectF bounds, int page, boolean thumbnail, int cacheOrder, boolean bestQuality, boolean annotationRendering) {
+        RenderingTask(float width, float height, RectF bounds, int page, boolean thumbnail, int cacheOrder,
+                      boolean bestQuality, boolean annotationRendering, boolean autoCrop) {
             this.page = page;
             this.width = width;
             this.height = height;
@@ -158,6 +159,7 @@ class RenderingHandler extends Handler {
             this.cacheOrder = cacheOrder;
             this.bestQuality = bestQuality;
             this.annotationRendering = annotationRendering;
+            this.autoCrop = autoCrop;
         }
     }
 }

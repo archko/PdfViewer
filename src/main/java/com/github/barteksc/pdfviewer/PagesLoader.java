@@ -287,7 +287,7 @@ class PagesLoader {
             if (!pdfView.cacheManager.upPartIfContained(page, pageRelativeBounds, cacheOrder)) {
                 pdfView.renderingHandler.addRenderingTask(page, renderWidth, renderHeight,
                         pageRelativeBounds, false, cacheOrder, pdfView.isBestQuality(),
-                        pdfView.isAnnotationRendering());
+                        pdfView.isAnnotationRendering(), pdfView.autoCrop());
             }
 
             cacheOrder++;
@@ -303,7 +303,7 @@ class PagesLoader {
         if (!pdfView.cacheManager.containsThumbnail(page, thumbnailRect)) {
             pdfView.renderingHandler.addRenderingTask(page,
                     thumbnailWidth, thumbnailHeight, thumbnailRect,
-                    true, 0, pdfView.isBestQuality(), pdfView.isAnnotationRendering());
+                    true, 0, pdfView.isBestQuality(), pdfView.isAnnotationRendering(), pdfView.autoCrop());
         }
     }
 
