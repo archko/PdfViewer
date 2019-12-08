@@ -18,15 +18,10 @@ package com.github.barteksc.pdfviewer;
 import android.graphics.Bitmap;
 import android.graphics.PointF;
 import android.graphics.Rect;
-import android.graphics.RectF;
 import android.util.SparseBooleanArray;
 
 import com.artifex.mupdf.fitz.Document;
 import com.artifex.mupdf.fitz.Link;
-import com.artifex.mupdf.fitz.Matrix;
-import com.artifex.mupdf.fitz.Page;
-import com.artifex.mupdf.fitz.RectI;
-import com.artifex.mupdf.viewer.MuPDFCore;
 import com.github.barteksc.pdfviewer.exception.PageRenderingException;
 import com.github.barteksc.pdfviewer.util.FitPolicy;
 import com.github.barteksc.pdfviewer.util.PageSizeCalculator;
@@ -37,8 +32,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import cn.archko.pdf.common.BitmapPool;
-import cn.archko.pdf.common.ImageWorker;
 import cn.archko.pdf.pdf.MupdfDocument;
 
 class PdfFile {
@@ -338,7 +331,7 @@ class PdfFile {
     }
 
     public Bitmap renderPageBitmap(RenderingHandler.RenderingTask task, Rect bounds) {
-        return nativeRender(task.page, task.autoCrop, bounds.width(), bounds.height(), 0, 0);
+        return pdfiumCore.nativeRender(task.page, task.autoCrop, bounds.width(), bounds.height(), 0, 0);
     }
 
     //public Meta getMetaData() {
@@ -424,53 +417,5 @@ class PdfFile {
 
     public Document getDocument() {
         return pdfiumCore.getDocument();
-    }
-
-    public Bitmap nativeRender(int pageNum, boolean autoCrop,
-                               int pageW, int pageH,
-                               int patchX, int patchY) {
-        Page page = pdfiumCore.getDocument().loadPage(pageNum);
-
-        final float zoom = 2;
-        final Matrix ctm = new Matrix(zoom, zoom);
-        final RectI bbox = new RectI(page.getBounds().transform(ctm));
-        final float xscale = (float) pageW / (float) (bbox.x1 - bbox.x0);
-        final float yscale = (float) pageH / (float) (bbox.y1 - bbox.y0);
-        ctm.scale(xscale, yscale);
-
-        int leftBound = 0;
-        int topBound = 0;
-        int width = pageW;
-        int height = pageH;
-        if (autoCrop) {
-            float ratio = 6f;
-            Bitmap thumb = BitmapPool.getInstance().acquire((int) (pageW / ratio), (int) (pageH / ratio));
-            Matrix matrix = new Matrix(ctm.a / ratio, ctm.d / ratio);
-            ImageWorker.render(page, matrix, thumb, 0, leftBound, topBound);
-
-            RectF rectF = ImageWorker.getCropRect(thumb);
-
-            float scale = thumb.getWidth() / rectF.width();
-            leftBound = (int) (rectF.left * ratio * scale);
-            topBound = (int) (rectF.top * ratio * scale);
-
-            height = (int) (rectF.height() * ratio * scale);
-            ctm.scale(scale, scale);
-            //if (Logcat.loggable) {
-            //    Logcat.d(String.format("decode t:%s:%s:%s,thumb:%s=%s, rectF:%s", width, height, scale, thumb.getWidth(), thumb.getHeight(), rectF));
-            //}
-        }
-
-        //if (Logcat.loggable) {
-        //    Logcat.d(String.format("decode bitmap:width-height: %s-%s,pagesize:%s,%s, bound:%s,%s,%s",
-        //            width, height, pageW, pageH, leftBound, topBound, ctm));
-        //}
-
-        Bitmap bitmap = BitmapPool.getInstance().acquire(width, height);
-
-        ImageWorker.render(page, ctm, bitmap, 0, leftBound, topBound);
-
-        page.destroy();
-        return bitmap;
     }
 }
