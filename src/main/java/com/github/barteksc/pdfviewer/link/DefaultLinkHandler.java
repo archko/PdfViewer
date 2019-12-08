@@ -20,6 +20,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.util.Log;
 
+import com.artifex.mupdf.fitz.Link;
 import com.github.barteksc.pdfviewer.PDFView;
 import com.github.barteksc.pdfviewer.model.LinkTapEvent;
 
@@ -35,13 +36,19 @@ public class DefaultLinkHandler implements LinkHandler {
 
     @Override
     public void handleLinkEvent(LinkTapEvent event) {
-        String uri = event.getLink().uri;
+        //String uri = event.getLink().uri;
         //Integer page = event.getLink().getDestPageIdx();
         //if (uri != null && !uri.isEmpty()) {
         //    handleUri(uri);
         //} else if (page != null) {
         //    handlePage(page);
         //}
+        Link link = event.getLink();
+        if (link.isExternal()) {
+            handleUri(link.uri);
+        } else {
+            pdfView.resolveLink(link);
+        }
     }
 
     private void handleUri(String uri) {

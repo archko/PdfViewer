@@ -357,7 +357,11 @@ class PdfFile {
     public List<Link> getPageLinks(int pageIndex) {
         int docPage = documentPage(pageIndex);
         Link[] links = pdfiumCore.getPageLinks(/*pdfDocument, */docPage);
-        return Arrays.asList(links);
+        if (null!=links) {
+            return Arrays.asList(links);
+        } else {
+            return new ArrayList<>();
+        }
     }
 
     //public RectF mapRectToDevice(int pageIndex, int startX, int startY, int sizeX, int sizeY,

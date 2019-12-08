@@ -1326,6 +1326,11 @@ public class PDFView extends RelativeLayout {
         return new Configurator(docSource);
     }
 
+    public void resolveLink(Link link) {
+        int page = pdfFile.getDocument().pageNumberFromLocation(pdfFile.getDocument().resolveLink(link));
+        jumpTo(page);
+    }
+
     public Document getDocument(){
         return pdfFile.getDocument();
     }
