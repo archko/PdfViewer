@@ -428,7 +428,7 @@ class PdfFile {
                                int patchX, int patchY) {
         Page page = pdfiumCore.getDoc().loadPage(pageNum);
 
-        final float zoom = 160 / 72;
+        final float zoom = 2;
         final Matrix ctm = new Matrix(zoom, zoom);
         final RectI bbox = new RectI(page.getBounds().transform(ctm));
         final float xscale = (float) pageW / (float) (bbox.x1 - bbox.x0);
@@ -440,8 +440,8 @@ class PdfFile {
         int width = pageW;
         int height = pageH;
         if (autoCrop) {
-            int ratio = 6;
-            Bitmap thumb = BitmapPool.getInstance().acquire(pageW / ratio, pageH / ratio);
+            float ratio = 6f;
+            Bitmap thumb = BitmapPool.getInstance().acquire((int) (pageW / ratio), (int) (pageH / ratio));
             Matrix matrix = new Matrix(ctm.a / ratio, ctm.d / ratio);
             ImageWorker.render(page, matrix, thumb, 0, leftBound, topBound);
 

@@ -28,6 +28,8 @@ import android.util.Log;
 import com.github.barteksc.pdfviewer.exception.PageRenderingException;
 import com.github.barteksc.pdfviewer.model.PagePart;
 
+import org.vudroid.core.BitmapPool;
+
 /**
  * A {@link Handler} that will process incoming {@link RenderingTask} messages
  * and alert {@link PDFView#onBitmapRendered(PagePart)} when the portion of the
@@ -73,7 +75,8 @@ class RenderingHandler extends Handler {
                         }
                     });
                 } else {
-                    part.getRenderedBitmap().recycle();
+                    //part.getRenderedBitmap().recycle();
+                    BitmapPool.getInstance().release(part.getRenderedBitmap());
                 }
             }
         } catch (final PageRenderingException ex) {

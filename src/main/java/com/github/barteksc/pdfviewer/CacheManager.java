@@ -19,6 +19,8 @@ import android.graphics.RectF;
 
 import com.github.barteksc.pdfviewer.model.PagePart;
 
+import org.vudroid.core.BitmapPool;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -70,12 +72,14 @@ class CacheManager {
             while ((activeCache.size() + passiveCache.size()) >= CACHE_SIZE &&
                     !passiveCache.isEmpty()) {
                 PagePart part = passiveCache.poll();
-                part.getRenderedBitmap().recycle();
+                //part.getRenderedBitmap().recycle();
+                BitmapPool.getInstance().release(part.getRenderedBitmap());
             }
 
             while ((activeCache.size() + passiveCache.size()) >= CACHE_SIZE &&
                     !activeCache.isEmpty()) {
-                activeCache.poll().getRenderedBitmap().recycle();
+                //activeCache.poll().getRenderedBitmap().recycle();
+                BitmapPool.getInstance().release(activeCache.poll().getRenderedBitmap());
             }
         }
     }
@@ -84,7 +88,8 @@ class CacheManager {
         synchronized (thumbnails) {
             // If cache too big, remove and recycle
             while (thumbnails.size() >= THUMBNAILS_CACHE_SIZE) {
-                thumbnails.remove(0).getRenderedBitmap().recycle();
+                //thumbnails.remove(0).getRenderedBitmap().recycle();
+                BitmapPool.getInstance().release(thumbnails.remove(0).getRenderedBitmap());
             }
 
             // Then add thumbnail
@@ -130,7 +135,8 @@ class CacheManager {
     private void addWithoutDuplicates(Collection<PagePart> collection, PagePart newPart) {
         for (PagePart part : collection) {
             if (part.equals(newPart)) {
-                newPart.getRenderedBitmap().recycle();
+                //newPart.getRenderedBitmap().recycle();
+                BitmapPool.getInstance().release(newPart.getRenderedBitmap());
                 return;
             }
         }
@@ -178,6 +184,8 @@ class CacheManager {
             }
             thumbnails.clear();
         }
+
+        BitmapPool.getInstance().clear();
     }
 
     class PagePartComparator implements Comparator<PagePart> {
