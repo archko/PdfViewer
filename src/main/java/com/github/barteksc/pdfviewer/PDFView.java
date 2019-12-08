@@ -778,7 +778,7 @@ public class PDFView extends RelativeLayout {
 
         canvas.drawBitmap(renderedBitmap, srcRect, dstRect, paint);
 
-        canvas.drawLine(0,dstRect.height(), dstRect.width(), dstRect.height(), debugPaint);
+        canvas.drawLine(0, dstRect.height(), dstRect.width(), dstRect.height(), debugPaint);
 
         if (Constants.DEBUG_MODE) {
             debugPaint.setColor(part.getPage() % 2 == 0 ? Color.RED : Color.BLUE);
@@ -1331,8 +1331,11 @@ public class PDFView extends RelativeLayout {
     }
 
     public void setAutoCrop(boolean autoCrop) {
-        this.autoCrop = autoCrop;
-        redraw();
+        if (this.autoCrop != autoCrop) {
+            this.autoCrop = autoCrop;
+            cacheManager.recycle();
+            loadPages();
+        }
     }
 
     public boolean autoCrop() {
@@ -1365,7 +1368,9 @@ public class PDFView extends RelativeLayout {
         return pdfFile.getPageLinks(page);
     }
 
-    /** Use an asset file as the pdf source */
+    /**
+     * Use an asset file as the pdf source
+     */
     public Configurator fromAsset(String assetName) {
         return new Configurator(new AssetSource(assetName));
     }
@@ -1377,17 +1382,23 @@ public class PDFView extends RelativeLayout {
         return new Configurator(new FileSource(file));
     }
 
-    /** Use URI as the pdf source, for use with content providers */
+    /**
+     * Use URI as the pdf source, for use with content providers
+     */
     public Configurator fromUri(Uri uri) {
         return new Configurator(new UriSource(uri));
     }
 
-    /** Use bytearray as the pdf source, documents is not saved */
+    /**
+     * Use bytearray as the pdf source, documents is not saved
+     */
     public Configurator fromBytes(byte[] bytes) {
         return new Configurator(new ByteArraySource(bytes));
     }
 
-    /** Use stream as the pdf source. Stream will be written to bytearray, because native code does not support Java Streams */
+    /**
+     * Use stream as the pdf source. Stream will be written to bytearray, because native code does not support Java Streams
+     */
     public Configurator fromStream(InputStream stream) {
         return new Configurator(new InputStreamSource(stream));
     }
