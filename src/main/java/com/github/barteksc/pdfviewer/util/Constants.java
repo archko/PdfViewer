@@ -30,7 +30,7 @@ public class Constants {
     public static float PART_SIZE = 128;
 
     /** Part of document above and below screen that should be preloaded, in dp */
-    public static int PRELOAD_OFFSET = 80;
+    public static int PRELOAD_OFFSET = 120;
 
     public static class Cache {
 

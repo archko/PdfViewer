@@ -1028,6 +1028,10 @@ public class PDFView extends RelativeLayout {
         moveTo(currentXOffset + dx, currentYOffset + dy);
     }
 
+    public void moveRelativeTo(float dx, float dy, boolean moveHandle) {
+        moveTo(currentXOffset + dx, currentYOffset + dy, moveHandle);
+    }
+
     /**
      * Change the zoom level
      */

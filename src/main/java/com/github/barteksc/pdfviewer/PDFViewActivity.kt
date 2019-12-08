@@ -275,7 +275,7 @@ public class PDFViewActivity : MuPDFRecyclerViewActivity(), OnPageChangeListener
         if (mReflow) {
             return mRecyclerView.scrollBy(scrollX, scrollY)
         } else {
-            return pdfView!!.moveRelativeTo(-scrollX.toFloat(), -scrollY.toFloat())
+            return pdfView!!.moveRelativeTo(-scrollX.toFloat(), -scrollY.toFloat(), false)
         }
     }
 
