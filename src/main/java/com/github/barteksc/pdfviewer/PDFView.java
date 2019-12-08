@@ -54,12 +54,12 @@ import com.github.barteksc.pdfviewer.listener.OnRenderListener;
 import com.github.barteksc.pdfviewer.listener.OnTapListener;
 import com.github.barteksc.pdfviewer.model.PagePart;
 import com.github.barteksc.pdfviewer.scroll.ScrollHandle;
-//import com.github.barteksc.pdfviewer.source.AssetSource;
-//import com.github.barteksc.pdfviewer.source.ByteArraySource;
+import com.github.barteksc.pdfviewer.source.AssetSource;
+import com.github.barteksc.pdfviewer.source.ByteArraySource;
 import com.github.barteksc.pdfviewer.source.DocumentSource;
 import com.github.barteksc.pdfviewer.source.FileSource;
-//import com.github.barteksc.pdfviewer.source.InputStreamSource;
-//import com.github.barteksc.pdfviewer.source.UriSource;
+import com.github.barteksc.pdfviewer.source.InputStreamSource;
+import com.github.barteksc.pdfviewer.source.UriSource;
 import com.github.barteksc.pdfviewer.util.Constants;
 import com.github.barteksc.pdfviewer.util.FitPolicy;
 import com.github.barteksc.pdfviewer.util.MathUtils;
@@ -77,6 +77,8 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import cn.archko.pdf.pdf.MupdfDocument;
 
 /**
  * It supports animations, zoom, cache, and swipe.
@@ -224,7 +226,7 @@ public class PDFView extends RelativeLayout {
     /**
      * Pdfium core for loading and rendering PDFs
      */
-    private MuPDFCore pdfiumCore;
+    private MupdfDocument pdfiumCore;
 
     private ScrollHandle scrollHandle;
 
@@ -310,10 +312,10 @@ public class PDFView extends RelativeLayout {
 
         paint = new Paint();
         debugPaint = new Paint();
-        debugPaint.setColor(Color.parseColor("#dddddd"));
+        debugPaint.setColor(Color.parseColor("#C0C0C0"));
         debugPaint.setStyle(Style.STROKE);
 
-        //pdfiumCore = new PdfiumCore(context);
+        pdfiumCore = new MupdfDocument(context);
         setWillNotDraw(false);
     }
 
@@ -329,7 +331,7 @@ public class PDFView extends RelativeLayout {
 
         recycled = false;
         // Start decoding document
-        decodingAsyncTask = new DecodingAsyncTask(docSource, password, userPages, this/*, pdfiumCore*/);
+        decodingAsyncTask = new DecodingAsyncTask(docSource, password, userPages, this, pdfiumCore);
         decodingAsyncTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
     }
 
@@ -1364,9 +1366,9 @@ public class PDFView extends RelativeLayout {
     }
 
     /** Use an asset file as the pdf source */
-    //public Configurator fromAsset(String assetName) {
-    //    return new Configurator(new AssetSource(assetName));
-    //}
+    public Configurator fromAsset(String assetName) {
+        return new Configurator(new AssetSource(assetName));
+    }
 
     /**
      * Use a file as the pdf source
@@ -1376,19 +1378,19 @@ public class PDFView extends RelativeLayout {
     }
 
     /** Use URI as the pdf source, for use with content providers */
-    //public Configurator fromUri(Uri uri) {
-    //    return new Configurator(new UriSource(uri));
-    //}
+    public Configurator fromUri(Uri uri) {
+        return new Configurator(new UriSource(uri));
+    }
 
     /** Use bytearray as the pdf source, documents is not saved */
-    //public Configurator fromBytes(byte[] bytes) {
-    //    return new Configurator(new ByteArraySource(bytes));
-    //}
+    public Configurator fromBytes(byte[] bytes) {
+        return new Configurator(new ByteArraySource(bytes));
+    }
 
     /** Use stream as the pdf source. Stream will be written to bytearray, because native code does not support Java Streams */
-    //public Configurator fromStream(InputStream stream) {
-    //    return new Configurator(new InputStreamSource(stream));
-    //}
+    public Configurator fromStream(InputStream stream) {
+        return new Configurator(new InputStreamSource(stream));
+    }
 
     /**
      * Use custom source as pdf source

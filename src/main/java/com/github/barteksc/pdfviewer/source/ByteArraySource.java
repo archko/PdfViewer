@@ -12,7 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *//*
+ */
 
 package com.github.barteksc.pdfviewer.source;
 
@@ -20,10 +20,12 @@ import android.content.Context;
 
 import com.artifex.mupdf.fitz.Document;
 import com.artifex.mupdf.viewer.MuPDFCore;
-import com.shockwave.pdfium.PdfDocument;
-import com.shockwave.pdfium.PdfiumCore;
+//import com.shockwave.pdfium.PdfDocument;
+//import com.shockwave.pdfium.PdfiumCore;
 
 import java.io.IOException;
+
+import cn.archko.pdf.pdf.MupdfDocument;
 
 public class ByteArraySource implements DocumentSource {
 
@@ -34,8 +36,7 @@ public class ByteArraySource implements DocumentSource {
     }
 
     @Override
-    public MuPDFCore createDocument(Context context, Document core, String password) throws IOException {
+    public Document createDocument(Context context, MupdfDocument core, String password) throws IOException {
         return core.newDocument(data, password);
     }
 }
-*/

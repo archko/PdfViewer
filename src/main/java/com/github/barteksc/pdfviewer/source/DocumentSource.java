@@ -22,6 +22,8 @@ import com.artifex.mupdf.viewer.MuPDFCore;
 
 import java.io.IOException;
 
+import cn.archko.pdf.pdf.MupdfDocument;
+
 public interface DocumentSource {
-    Document createDocument(Context context, Document core, String password) throws IOException;
+    Document createDocument(Context context, MupdfDocument core, String password) throws IOException;
 }

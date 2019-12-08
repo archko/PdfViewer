@@ -23,6 +23,8 @@ import com.artifex.mupdf.fitz.Document;
 import java.io.File;
 import java.io.IOException;
 
+import cn.archko.pdf.pdf.MupdfDocument;
+
 public class FileSource implements DocumentSource {
 
     public File file;
@@ -32,9 +34,7 @@ public class FileSource implements DocumentSource {
     }
 
     @Override
-    public Document createDocument(Context context, Document core, String password) throws IOException {
-        ParcelFileDescriptor pfd = ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY);
-        //return core.newDocument(pfd, password);
-        return Document.openDocument(file.getAbsolutePath());
+    public Document createDocument(Context context, MupdfDocument core, String password) throws IOException {
+        return core.newDocument(file.getAbsolutePath(), password);
     }
 }

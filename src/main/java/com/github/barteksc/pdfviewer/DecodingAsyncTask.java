@@ -17,13 +17,12 @@ package com.github.barteksc.pdfviewer;
 
 import android.os.AsyncTask;
 
-import com.artifex.mupdf.fitz.Document;
-import com.artifex.mupdf.viewer.MuPDFCore;
 import com.github.barteksc.pdfviewer.source.DocumentSource;
-import com.github.barteksc.pdfviewer.source.FileSource;
 import com.github.barteksc.pdfviewer.util.Size;
 
 import java.lang.ref.WeakReference;
+
+import cn.archko.pdf.pdf.MupdfDocument;
 
 class DecodingAsyncTask extends AsyncTask<Void, Void, Throwable> {
 
@@ -31,19 +30,19 @@ class DecodingAsyncTask extends AsyncTask<Void, Void, Throwable> {
 
     private WeakReference<PDFView> pdfViewReference;
 
-    private MuPDFCore pdfiumCore;
+    private MupdfDocument pdfiumCore;
     private String password;
     private DocumentSource docSource;
     private int[] userPages;
     private PdfFile pdfFile;
 
-    DecodingAsyncTask(DocumentSource docSource, String password, int[] userPages, PDFView pdfView/*, PdfiumCore pdfiumCore*/) {
+    DecodingAsyncTask(DocumentSource docSource, String password, int[] userPages, PDFView pdfView, MupdfDocument pdfiumCore) {
         this.docSource = docSource;
         this.userPages = userPages;
         this.cancelled = false;
         this.pdfViewReference = new WeakReference<>(pdfView);
         this.password = password;
-        //this.pdfiumCore = pdfiumCore;
+        this.pdfiumCore = pdfiumCore;
     }
 
     @Override
@@ -51,9 +50,11 @@ class DecodingAsyncTask extends AsyncTask<Void, Void, Throwable> {
         try {
             PDFView pdfView = pdfViewReference.get();
             if (pdfView != null) {
-                //Document pdfDocument = docSource.createDocument(pdfView.getContext(), /*pdfiumCore,*/null, password);
-                pdfiumCore=new MuPDFCore(((FileSource)docSource).file.getAbsolutePath());
-                pdfFile = new PdfFile(pdfiumCore, /*pdfDocument,*/ pdfView.getPageFitPolicy(), getViewSize(pdfView),
+                docSource.createDocument(pdfView.getContext(), pdfiumCore, password);
+                if (pdfiumCore.needsPassword() && !pdfiumCore.authenticatePassword(password)) {
+                    return new Exception("need a password");
+                }
+                pdfFile = new PdfFile(pdfiumCore, pdfView.getPageFitPolicy(), getViewSize(pdfView),
                         userPages, pdfView.isSwipeVertical(), pdfView.getSpacingPx(), pdfView.isAutoSpacingEnabled(),
                         pdfView.isFitEachPage());
                 return null;

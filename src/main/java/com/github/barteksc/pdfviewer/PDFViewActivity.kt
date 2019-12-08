@@ -7,11 +7,7 @@ import android.graphics.Color
 import android.os.Bundle
 import android.preference.PreferenceManager
 import android.text.TextUtils
-import android.view.MotionEvent
-import android.view.View
-import android.view.ViewConfiguration
-import android.view.ViewGroup
-import android.view.Window
+import android.view.*
 import android.widget.RelativeLayout
 import android.widget.SeekBar
 import android.widget.TextView
@@ -23,11 +19,7 @@ import cn.archko.pdf.activities.MuPDFRecyclerViewActivity
 import cn.archko.pdf.activities.PdfOptionsActivity
 import cn.archko.pdf.adapters.MuPDFReflowAdapter
 import cn.archko.pdf.colorpicker.ColorPickerDialog
-import cn.archko.pdf.common.Logcat
-import cn.archko.pdf.common.MenuHelper
-import cn.archko.pdf.common.OutlineHelper
-import cn.archko.pdf.common.PDFBookmarkManager
-import cn.archko.pdf.common.StyleHelper
+import cn.archko.pdf.common.*
 import cn.archko.pdf.entity.FontBean
 import cn.archko.pdf.entity.MenuBean
 import cn.archko.pdf.fragments.FontsFragment
@@ -37,15 +29,12 @@ import cn.archko.pdf.listeners.OutlineListener
 import cn.archko.pdf.presenter.PageViewPresenter
 import cn.archko.pdf.widgets.APageSeekBarControls
 import cn.archko.pdf.widgets.ViewerDividerItemDecoration
-import com.github.barteksc.pdfviewer.listener.OnLoadCompleteListener
-import com.github.barteksc.pdfviewer.listener.OnPageChangeListener
-import com.github.barteksc.pdfviewer.listener.OnPageErrorListener
-import com.github.barteksc.pdfviewer.listener.OnTapListener
+import com.github.barteksc.pdfviewer.listener.*
 import com.github.barteksc.pdfviewer.scroll.DefaultScrollHandle
 import java.io.File
 
 public class PDFViewActivity : MuPDFRecyclerViewActivity(), OnPageChangeListener, OnLoadCompleteListener,
-        OnPageErrorListener, OutlineListener {
+        OnPageErrorListener, OutlineListener, OnErrorListener {
 
     private var pdfView: PDFView? = null
 
@@ -163,7 +152,14 @@ public class PDFViewActivity : MuPDFRecyclerViewActivity(), OnPageChangeListener
                 .onPageError(this)
                 .onTap(onTapListener)
                 .autoCrop(autoCrop)
+                .onError(this)
                 .load();
+    }
+
+    override fun onError(t: Throwable?) {
+        progressDialog.dismiss()
+        Toast.makeText(this@PDFViewActivity, "open file error:$t", Toast.LENGTH_LONG).show()
+        this@PDFViewActivity.finish()
     }
 
     private fun loadBookmark() {
@@ -185,7 +181,7 @@ public class PDFViewActivity : MuPDFRecyclerViewActivity(), OnPageChangeListener
     }
 
     override fun onPageChanged(page: Int, pageCount: Int) {
-        Logcat.d("onPageChanged:" + page + " pc:" + pageCount);
+        Logcat.d("onPageChanged:$page pc:$pageCount");
 
         updateProgress(page)
     }
@@ -242,8 +238,8 @@ public class PDFViewActivity : MuPDFRecyclerViewActivity(), OnPageChangeListener
     }
 
     override fun onPageError(page: Int, t: Throwable?) {
-        progressDialog.dismiss()
-        Logcat.d("onPageError:" + t);
+        Logcat.d("onPageError:$t");
+        Toast.makeText(this@PDFViewActivity, "onPageError:$t", Toast.LENGTH_SHORT).show()
     }
 
     //======================= ui =======================

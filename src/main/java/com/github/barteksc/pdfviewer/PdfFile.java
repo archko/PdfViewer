@@ -39,12 +39,13 @@ import java.util.List;
 
 import cn.archko.pdf.common.BitmapPool;
 import cn.archko.pdf.common.ImageWorker;
+import cn.archko.pdf.pdf.MupdfDocument;
 
 class PdfFile {
 
     private static final Object lock = new Object();
     //private PdfDocument pdfDocument;
-    private MuPDFCore pdfiumCore;
+    private MupdfDocument pdfiumCore;
     private int pagesCount = 0;
     /**
      * Original page sizes
@@ -110,7 +111,7 @@ class PdfFile {
      */
     private int[] originalUserPages;
 
-    PdfFile(MuPDFCore pdfiumCore,/* PdfDocument pdfDocument,*/ FitPolicy pageFitPolicy, Size viewSize, int[] originalUserPages,
+    PdfFile(MupdfDocument pdfiumCore,/* PdfDocument pdfDocument,*/ FitPolicy pageFitPolicy, Size viewSize, int[] originalUserPages,
             boolean isVertical, int spacing, boolean autoSpacing, boolean fitEachPage) {
         this.pdfiumCore = pdfiumCore;
         //this.pdfDocument = pdfDocument;
@@ -422,13 +423,13 @@ class PdfFile {
     }
 
     public Document getDocument() {
-        return pdfiumCore.getDoc();
+        return pdfiumCore.getDocument();
     }
 
     public Bitmap nativeRender(int pageNum, boolean autoCrop,
                                int pageW, int pageH,
                                int patchX, int patchY) {
-        Page page = pdfiumCore.getDoc().loadPage(pageNum);
+        Page page = pdfiumCore.getDocument().loadPage(pageNum);
 
         final float zoom = 2;
         final Matrix ctm = new Matrix(zoom, zoom);
