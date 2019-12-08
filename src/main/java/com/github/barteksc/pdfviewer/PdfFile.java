@@ -315,7 +315,6 @@ class PdfFile {
             if (openedPages.indexOfKey(docPage) < 0) {
                 try {
                     //pdfiumCore.openPage(pdfDocument, docPage);
-                    pdfiumCore.gotoPage(docPage);
                     openedPages.put(docPage, true);
                     return true;
                 } catch (Exception e) {

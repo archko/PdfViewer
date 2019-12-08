@@ -387,7 +387,11 @@ public class PDFViewActivity : MuPDFRecyclerViewActivity(), OnPageChangeListener
             }
 
             override fun goToPageIndex(page: Int) {
-                mRecyclerView.layoutManager?.scrollToPosition(page)
+                if (mReflow) {
+                    mRecyclerView.layoutManager?.scrollToPosition(page)
+                } else {
+                    pdfView?.jumpTo(page)
+                }
             }
 
             override fun showOutline() {
