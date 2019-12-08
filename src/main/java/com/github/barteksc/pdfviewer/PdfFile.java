@@ -33,12 +33,11 @@ import com.github.barteksc.pdfviewer.util.PageSizeCalculator;
 import com.github.barteksc.pdfviewer.util.Size;
 import com.github.barteksc.pdfviewer.util.SizeF;
 
-import org.vudroid.core.BitmapPool;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import cn.archko.pdf.common.BitmapPool;
 import cn.archko.pdf.common.ImageWorker;
 
 class PdfFile {

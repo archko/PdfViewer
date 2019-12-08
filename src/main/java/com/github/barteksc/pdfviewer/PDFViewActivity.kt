@@ -34,15 +34,14 @@ import cn.archko.pdf.fragments.FontsFragment
 import cn.archko.pdf.listeners.DataListener
 import cn.archko.pdf.listeners.MenuListener
 import cn.archko.pdf.listeners.OutlineListener
+import cn.archko.pdf.presenter.PageViewPresenter
+import cn.archko.pdf.widgets.APageSeekBarControls
 import cn.archko.pdf.widgets.ViewerDividerItemDecoration
 import com.github.barteksc.pdfviewer.listener.OnLoadCompleteListener
 import com.github.barteksc.pdfviewer.listener.OnPageChangeListener
 import com.github.barteksc.pdfviewer.listener.OnPageErrorListener
 import com.github.barteksc.pdfviewer.listener.OnTapListener
 import com.github.barteksc.pdfviewer.scroll.DefaultScrollHandle
-import org.vudroid.core.events.PageViewPresenter
-import org.vudroid.core.views.APageSeekBarControls
-import org.vudroid.core.views.PageViewZoomControls
 import java.io.File
 
 public class PDFViewActivity : MuPDFRecyclerViewActivity(), OnPageChangeListener, OnLoadCompleteListener,

@@ -19,8 +19,6 @@ import android.graphics.RectF;
 
 import com.github.barteksc.pdfviewer.model.PagePart;
 
-import org.vudroid.core.BitmapPool;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -29,6 +27,7 @@ import java.util.PriorityQueue;
 
 import androidx.annotation.Nullable;
 
+import cn.archko.pdf.common.BitmapPool;
 import static com.github.barteksc.pdfviewer.util.Constants.Cache.CACHE_SIZE;
 import static com.github.barteksc.pdfviewer.util.Constants.Cache.THUMBNAILS_CACHE_SIZE;
 
