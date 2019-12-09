@@ -6,7 +6,7 @@
         <activity
             android:name=".PDFViewActivity"
             android:configChanges="orientation|keyboardHidden|screenSize"
-            android:label="AMupdf"
+            android:label="APV"
             android:screenOrientation="sensor" >
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
