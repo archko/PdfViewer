@@ -22,6 +22,8 @@ import android.graphics.RectF;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
+import android.os.SystemClock;
+import android.util.Log;
 
 import com.github.barteksc.pdfviewer.exception.PageRenderingException;
 import com.github.barteksc.pdfviewer.model.PagePart;
@@ -98,20 +100,33 @@ class RenderingHandler extends Handler {
             return null;
         }
 
-        //Bitmap render;
-        //try {
-        //    render = Bitmap.createBitmap(w, h, renderingTask.bestQuality ? Bitmap.Config.ARGB_8888 : Bitmap.Config.RGB_565);
-        //} catch (IllegalArgumentException e) {
-        //    Log.e(TAG, "Cannot create bitmap", e);
-        //    return null;
-        //}
+        long start=SystemClock.uptimeMillis();
+        Bitmap render;
+        try {
+            render = Bitmap.createBitmap(w, h, renderingTask.bestQuality ? Bitmap.Config.ARGB_8888 : Bitmap.Config.RGB_565);
+        } catch (IllegalArgumentException e) {
+            Log.e(TAG, "Cannot create bitmap", e);
+            return null;
+        }
         calculateBounds(w, h, renderingTask.bounds);
+        //Log.d("decode", String.format("proceed:w:%s, h:%s ,page:%s, bounds:%s,roundedRenderBounds:%s",
+        //        w, h, renderingTask.page, renderingTask.bounds, roundedRenderBounds));
 
-        Bitmap render = pdfFile.renderPageBitmap(renderingTask, roundedRenderBounds);
+        pdfFile.renderPageBitmap(render, renderingTask, roundedRenderBounds);
 
+        add(start);
         return new PagePart(renderingTask.page, render,
                 renderingTask.bounds, renderingTask.thumbnail,
                 renderingTask.cacheOrder);
+    }
+
+    static long time;
+    static int count;
+
+    static void add(long start) {
+        count++;
+        time += (SystemClock.uptimeMillis() - start);
+        Log.d("decode", "decode time:" + time/count);
     }
 
     private void calculateBounds(int width, int height, RectF pageSliceBounds) {

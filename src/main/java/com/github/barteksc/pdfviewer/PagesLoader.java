@@ -234,17 +234,17 @@ class PagesLoader {
 
         List<RenderRange> rangeList = getRenderRangeList(firstXOffset, firstYOffset, lastXOffset, lastYOffset);
 
-        for (RenderRange range : rangeList) {
-            loadThumbnail(range.page);
-        }
-
         //for (RenderRange range : rangeList) {
-        //    calculatePartSize(range.gridSize);
-        //    parts += loadPage(range.page, range.leftTop.row, range.rightBottom.row, range.leftTop.col, range.rightBottom.col, CACHE_SIZE - parts);
-        //    if (parts >= CACHE_SIZE) {
-        //        break;
-        //    }
+        //    loadThumbnail(range.page);
         //}
+
+        for (RenderRange range : rangeList) {
+            calculatePartSize(range.gridSize);
+            parts += loadPage(range.page, range.leftTop.row, range.rightBottom.row, range.leftTop.col, range.rightBottom.col, CACHE_SIZE - parts);
+            if (parts >= CACHE_SIZE) {
+                break;
+            }
+        }
 
     }
 
@@ -287,7 +287,7 @@ class PagesLoader {
             if (!pdfView.cacheManager.upPartIfContained(page, pageRelativeBounds, cacheOrder)) {
                 pdfView.renderingHandler.addRenderingTask(page, renderWidth, renderHeight,
                         pageRelativeBounds, false, cacheOrder, pdfView.isBestQuality(),
-                        pdfView.isAnnotationRendering(), pdfView.autoCrop());
+                        pdfView.isAnnotationRendering(), false);
             }
 
             cacheOrder++;
