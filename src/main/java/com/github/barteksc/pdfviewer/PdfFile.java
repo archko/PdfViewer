@@ -332,6 +332,7 @@ class PdfFile {
 
     public Bitmap renderPageBitmap(Bitmap bitmap, RenderingHandler.RenderingTask task, Rect bounds) {
         return pdfiumCore.renderBitmap(bitmap, task.page, task.autoCrop, task.bounds, bounds);
+        //return pdfiumCore.nativeRender(task.page, task.autoCrop, bounds.width(), bounds.height(), 0, 0);
     }
 
     //public Meta getMetaData() {
