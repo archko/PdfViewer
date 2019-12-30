@@ -473,7 +473,6 @@ public class PDFViewActivity : MuPDFRecyclerViewActivity(), OnPageChangeListener
     }
 
     override fun commitZoom() {
-        bitmapManager?.clear()
         mRecyclerView.adapter?.notifyItemChanged(getCurrentPos())
     }
 
