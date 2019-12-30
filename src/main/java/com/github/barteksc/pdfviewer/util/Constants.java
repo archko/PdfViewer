@@ -27,7 +27,7 @@ public class Constants {
      * Tinier : a little bit slower to have the whole page rendered but more reactive.
      * Bigger : user will have to wait longer to have the first visual results
      */
-    public static float PART_SIZE = 256*2;
+    public static float PART_SIZE = 128*5;
 
     /** Part of document above and below screen that should be preloaded, in dp */
     public static int PRELOAD_OFFSET = 160;
@@ -35,7 +35,7 @@ public class Constants {
     public static class Cache {
 
         /** The size of the cache (number of bitmaps kept) */
-        public static int CACHE_SIZE = 20;
+        public static int CACHE_SIZE = 16;
 
         public static int THUMBNAILS_CACHE_SIZE = 4;
     }
