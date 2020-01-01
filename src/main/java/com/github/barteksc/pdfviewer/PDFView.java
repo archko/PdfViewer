@@ -339,7 +339,7 @@ public class PDFView extends RelativeLayout {
 
     private void load(int[] userPages, List<Size> originalPageSizes, Document document) {
         if (!recycled) {
-            throw new IllegalStateException("Don't call load on a PDF View without recycling it first.");
+            loadError(new IllegalStateException("Don't call load on a PDF View without recycling it first."));
         }
 
         recycled = false;
