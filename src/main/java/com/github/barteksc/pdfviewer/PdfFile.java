@@ -40,6 +40,7 @@ class PdfFile {
     //private PdfDocument pdfDocument;
     private MupdfDocument pdfiumCore;
     private int pagesCount = 0;
+    List<Size> aPageSizes;
     /**
      * Original page sizes
      */
@@ -117,6 +118,32 @@ class PdfFile {
         setup(viewSize);
     }
 
+    /**
+     * init with pagesizes
+     *
+     * @param pdfiumCore
+     * @param pageSizes
+     * @param pageFitPolicy
+     * @param viewSize
+     * @param originalUserPages
+     * @param isVertical
+     * @param spacing
+     * @param autoSpacing
+     * @param fitEachPage
+     */
+    PdfFile(MupdfDocument pdfiumCore, List<Size> pageSizes, FitPolicy pageFitPolicy, Size viewSize, int[] originalUserPages,
+            boolean isVertical, int spacing, boolean autoSpacing, boolean fitEachPage) {
+        this.pdfiumCore = pdfiumCore;
+        this.pageFitPolicy = pageFitPolicy;
+        this.originalUserPages = originalUserPages;
+        this.isVertical = isVertical;
+        this.spacingPx = spacing;
+        this.autoSpacing = autoSpacing;
+        this.fitEachPage = fitEachPage;
+        aPageSizes = pageSizes;
+        setupWithPageSize(viewSize);
+    }
+
     private void setup(Size viewSize) {
         if (originalUserPages != null) {
             pagesCount = originalUserPages.length;
@@ -127,6 +154,23 @@ class PdfFile {
         for (int i = 0; i < pagesCount; i++) {
             PointF pointF = pdfiumCore.getPageSize(/*pdfDocument, */documentPage(i));
             Size pageSize = new Size((int) pointF.x, (int) pointF.y);
+            if (pageSize.getWidth() > originalMaxWidthPageSize.getWidth()) {
+                originalMaxWidthPageSize = pageSize;
+            }
+            if (pageSize.getHeight() > originalMaxHeightPageSize.getHeight()) {
+                originalMaxHeightPageSize = pageSize;
+            }
+            originalPageSizes.add(pageSize);
+        }
+
+        recalculatePageSizes(viewSize);
+    }
+
+    private void setupWithPageSize(Size viewSize) {
+        pagesCount = aPageSizes.size();
+
+        for (int i = 0; i < pagesCount; i++) {
+            Size pageSize = aPageSizes.get(i);
             if (pageSize.getWidth() > originalMaxWidthPageSize.getWidth()) {
                 originalMaxWidthPageSize = pageSize;
             }
@@ -352,7 +396,7 @@ class PdfFile {
     public List<Link> getPageLinks(int pageIndex) {
         int docPage = documentPage(pageIndex);
         Link[] links = pdfiumCore.getPageLinks(/*pdfDocument, */docPage);
-        if (null!=links) {
+        if (null != links) {
             return Arrays.asList(links);
         } else {
             return new ArrayList<>();

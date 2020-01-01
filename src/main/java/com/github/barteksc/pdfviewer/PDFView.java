@@ -38,7 +38,6 @@ import android.widget.RelativeLayout;
 
 import com.artifex.mupdf.fitz.Document;
 import com.artifex.mupdf.fitz.Link;
-import com.artifex.mupdf.viewer.MuPDFCore;
 import com.github.barteksc.pdfviewer.exception.PageRenderingException;
 import com.github.barteksc.pdfviewer.link.DefaultLinkHandler;
 import com.github.barteksc.pdfviewer.link.LinkHandler;
@@ -71,6 +70,9 @@ import com.github.barteksc.pdfviewer.util.Util;
 //import com.shockwave.pdfium.PdfiumCore;
 //import com.shockwave.pdfium.util.Size;
 //import com.shockwave.pdfium.util.SizeF;
+
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.InputStream;
@@ -333,6 +335,20 @@ public class PDFView extends RelativeLayout {
         // Start decoding document
         decodingAsyncTask = new DecodingAsyncTask(docSource, password, userPages, this, pdfiumCore);
         decodingAsyncTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+    }
+
+    private void load(int[] userPages, List<Size> originalPageSizes, Document document) {
+        if (!recycled) {
+            throw new IllegalStateException("Don't call load on a PDF View without recycling it first.");
+        }
+
+        recycled = false;
+
+        pdfiumCore.setDocument(document);
+        PdfFile pdfFile = new PdfFile(pdfiumCore, originalPageSizes, getPageFitPolicy(), new Size(getWidth(), getHeight()),
+                userPages, isSwipeVertical(), getSpacingPx(), isAutoSpacingEnabled(),
+                isFitEachPage());
+        loadComplete(pdfFile);
     }
 
     /**
@@ -1479,7 +1495,10 @@ public class PDFView extends RelativeLayout {
 
         private boolean nightMode = false;
 
-        private boolean autoCrop = true;
+        private boolean crop = true;
+
+        private List<Size> originalPageSizes;
+        private Document mDocument;
 
         private Configurator(DocumentSource documentSource) {
             this.documentSource = documentSource;
@@ -1620,8 +1639,18 @@ public class PDFView extends RelativeLayout {
             return this;
         }
 
-        public Configurator autoCrop(boolean autoCrop) {
-            this.autoCrop = autoCrop;
+        public Configurator crop(boolean autoCrop) {
+            this.crop = autoCrop;
+            return this;
+        }
+
+        public Configurator setOriginalPageSizes(List<Size> originalPageSizes) {
+            this.originalPageSizes = originalPageSizes;
+            return this;
+        }
+
+        public Configurator setDocument(@Nullable Document document) {
+            mDocument = document;
             return this;
         }
 
@@ -1661,8 +1690,12 @@ public class PDFView extends RelativeLayout {
             PDFView.this.setFitEachPage(fitEachPage);
             PDFView.this.setPageSnap(pageSnap);
             PDFView.this.setPageFling(pageFling);
-            PDFView.this.setAutoCrop(autoCrop);
+            PDFView.this.setAutoCrop(crop);
 
+            if (null != originalPageSizes && originalPageSizes.size() > 0) {
+                PDFView.this.load(pageNumbers, originalPageSizes, mDocument);
+                return;
+            }
             if (pageNumbers != null) {
                 PDFView.this.load(documentSource, password, pageNumbers);
             } else {

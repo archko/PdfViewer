@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
 import android.graphics.Color
+import android.graphics.PointF
 import android.os.Bundle
 import android.preference.PreferenceManager
 import android.text.TextUtils
@@ -31,6 +32,7 @@ import cn.archko.pdf.widgets.APageSeekBarControls
 import cn.archko.pdf.widgets.ViewerDividerItemDecoration
 import com.github.barteksc.pdfviewer.listener.*
 import com.github.barteksc.pdfviewer.scroll.DefaultScrollHandle
+import com.github.barteksc.pdfviewer.util.Size
 import java.io.File
 
 public class PDFViewActivity : MuPDFRecyclerViewActivity(), OnPageChangeListener, OnLoadCompleteListener,
@@ -43,11 +45,7 @@ public class PDFViewActivity : MuPDFRecyclerViewActivity(), OnPageChangeListener
     lateinit var mControllerLayout: RelativeLayout
 
     private var mPageSeekBarControls: APageSeekBarControls? = null
-    private var mReflow = false
-    private val OUTLINE_REQUEST = 0
-    private var pdfBookmarkManager: PDFBookmarkManager? = null
     private var outlineHelper: OutlineHelper? = null
-    //private var mZoomControls: PageViewZoomControls? = null
     private var mStyleControls: View? = null
 
     private var mMenuHelper: MenuHelper? = null
@@ -64,8 +62,8 @@ public class PDFViewActivity : MuPDFRecyclerViewActivity(), OnPageChangeListener
     private var mFgSetting: View? = null
     private var colorPickerDialog: ColorPickerDialog? = null
 
+    private val originalPageSizes = ArrayList<Size>()
     private var mStyleHelper: StyleHelper? = null
-    private val START_PROGRESS = 15
     var margin = 10
 
     public override fun onCreate(savedInstanceState: Bundle?) {
@@ -76,8 +74,6 @@ public class PDFViewActivity : MuPDFRecyclerViewActivity(), OnPageChangeListener
         mPageSeekBarControls?.updateTitle(mPath)
 
         autoCrop = PreferenceManager.getDefaultSharedPreferences(this).getBoolean(PdfOptionsActivity.PREF_AUTOCROP, true)
-
-        loadFromUri();
     }
 
     override fun initView() {
@@ -90,19 +86,17 @@ public class PDFViewActivity : MuPDFRecyclerViewActivity(), OnPageChangeListener
 
         mControllerLayout = findViewById(R.id.layout)
 
-        zoomModel?.addEventListener(this)
-
         mPageSeekBarControls = createSeekControls()
 
-        var lp = RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+        val lp = RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
         lp.addRule(RelativeLayout.ALIGN_PARENT_TOP)
         mControllerLayout.addView(mPageSeekBarControls, lp)
 
         mPageSeekBarControls?.autoCropButton!!.visibility = View.VISIBLE
 
         with(mLeftDrawer) {
-            layoutManager = androidx.recyclerview.widget.LinearLayoutManager(this@PDFViewActivity, androidx.recyclerview.widget.LinearLayoutManager.VERTICAL, false)
-            addItemDecoration(cn.archko.pdf.widgets.ViewerDividerItemDecoration(this@PDFViewActivity, androidx.recyclerview.widget.LinearLayoutManager.VERTICAL))
+            layoutManager = LinearLayoutManager(this@PDFViewActivity, LinearLayoutManager.VERTICAL, false)
+            addItemDecoration(ViewerDividerItemDecoration(this@PDFViewActivity, LinearLayoutManager.VERTICAL))
         }
 
         mRecyclerView = findViewById(R.id.recycler_view)//RecyclerView(this)
@@ -133,14 +127,35 @@ public class PDFViewActivity : MuPDFRecyclerViewActivity(), OnPageChangeListener
     }
 
     override fun loadDoc() {
+        super.loadDoc()
+    }
+
+    override fun doLoadDoc() {
+        try {
+            progressDialog.setMessage("Loading menu")
+
+            if (mReflow) {
+                addGesture()
+            } else {
+                loadFromUri()
+            }
+
+            isDocLoaded = true
+        } catch (e: Exception) {
+            e.printStackTrace()
+            onError(e)
+            finish()
+        } finally {
+            progressDialog.dismiss()
+        }
     }
 
     private fun loadFromUri() {
-        loadBookmark()
+        setupView()
+
+        autoCropModeSet(autoCrop)
         val pos = pdfBookmarkManager?.getBookmark()!!
 
-        progressDialog.setMessage(mPath)
-        progressDialog.show()
         pdfView!!.zoomTo(pdfBookmarkManager!!.getBookmarkToRestore().zoomLevel / 1000f)
         pdfView!!.fromFile(File(mPath!!))
                 .defaultPage(pos)
@@ -151,8 +166,10 @@ public class PDFViewActivity : MuPDFRecyclerViewActivity(), OnPageChangeListener
                 .spacing(10) // in dp
                 .onPageError(this)
                 .onTap(onTapListener)
-                .autoCrop(autoCrop)
+                .crop(autoCrop)
                 .onError(this)
+                .setOriginalPageSizes(originalPageSizes)
+                .setDocument(mDocument)
                 .load();
     }
 
@@ -160,24 +177,6 @@ public class PDFViewActivity : MuPDFRecyclerViewActivity(), OnPageChangeListener
         progressDialog.dismiss()
         Toast.makeText(this@PDFViewActivity, "open file error:$t", Toast.LENGTH_LONG).show()
         this@PDFViewActivity.finish()
-    }
-
-    private fun loadBookmark() {
-        pdfBookmarkManager = PDFBookmarkManager()
-        var ac = 0;
-        if (!autoCrop) {
-            ac = 1;
-        }
-        pdfBookmarkManager!!.setStartBookmark(mPath, ac)
-        val progress = pdfBookmarkManager?.bookmarkToRestore;
-        progress?.let {
-            autoCrop = it.autoCrop == 0;
-            mReflow = it.reflow == 1
-        }
-        setupView()
-
-        addGesture()
-        autoCropModeSet(autoCrop)
     }
 
     override fun onPageChanged(page: Int, pageCount: Int) {
@@ -207,12 +206,10 @@ public class PDFViewActivity : MuPDFRecyclerViewActivity(), OnPageChangeListener
             }
 
             mPageSeekBarControls?.showReflow(true)
-            //if (null != pdfBookmarkManager!!.getBookmarkToRestore()) {
-            //    zoomModel?.setZoom(pdfBookmarkManager!!.getBookmarkToRestore().zoomLevel / 1000f)
-            //}
+
             outlineHelper = OutlineHelper(mDocument, this);
 
-            var pos = pdfBookmarkManager?.restoreBookmark(mDocument!!.countPages())!!
+            val pos = pdfBookmarkManager?.restoreBookmark(mDocument!!.countPages())!!
             mMenuHelper = MenuHelper(mLeftDrawer, outlineHelper, supportFragmentManager)
             mMenuHelper?.setupMenu(mPath, this@PDFViewActivity, menuListener)
             mMenuHelper?.setupOutline(pos)
@@ -339,13 +336,6 @@ public class PDFViewActivity : MuPDFRecyclerViewActivity(), OnPageChangeListener
         }
     }
 
-    /*private fun createZoomControls(zoomModel: ZoomModel): PageViewZoomControls {
-        val controls = PageViewZoomControls(this, zoomModel)
-        controls.gravity = Gravity.RIGHT or Gravity.BOTTOM
-        zoomModel.addEventListener(controls)
-        return controls
-    }*/
-
     override fun onSingleTap() {
         if (mPageSeekBarControls?.visibility == View.VISIBLE) {
             mPageSeekBarControls?.hide()
@@ -360,7 +350,6 @@ public class PDFViewActivity : MuPDFRecyclerViewActivity(), OnPageChangeListener
             return
         }
         mPageSeekBarControls?.hide()
-        //mZoomControls?.visibility = View.GONE
         mStyleControls?.visibility = View.GONE
         if (!mDrawerLayout.isDrawerOpen(mLeftDrawer)) {
             mDrawerLayout.openDrawer(mLeftDrawer)
@@ -393,12 +382,10 @@ public class PDFViewActivity : MuPDFRecyclerViewActivity(), OnPageChangeListener
             }
 
             override fun showOutline() {
-                //outlineHelper?.openOutline(getCurrentPos(), OUTLINE_REQUEST)
                 this@PDFViewActivity.showOutline()
             }
 
             override fun back() {
-                //this@MuPDFRecyclerViewActivity.finish()
                 mPageSeekBarControls?.hide()
             }
 
@@ -419,7 +406,7 @@ public class PDFViewActivity : MuPDFRecyclerViewActivity(), OnPageChangeListener
                 val frameLayout = mPageSeekBarControls?.getLayoutOutline()
 
                 if (frameLayout?.visibility == View.GONE) {
-                    frameLayout?.visibility = View.VISIBLE
+                    frameLayout.visibility = View.VISIBLE
                     mMenuHelper?.updateSelection(getCurrentPos())
                 } else {
                     frameLayout?.visibility = View.GONE
@@ -431,7 +418,7 @@ public class PDFViewActivity : MuPDFRecyclerViewActivity(), OnPageChangeListener
     }
 
     private fun toggleAutoCrop() {
-        var flag = autoCropModeSet(!autoCrop)
+        val flag = autoCropModeSet(!autoCrop)
         if (flag) {
             autoCrop = !autoCrop;
         }
@@ -518,9 +505,9 @@ public class PDFViewActivity : MuPDFRecyclerViewActivity(), OnPageChangeListener
         }
         var zoom = 1000.0f
         if (mReflow) {
-            if (zoomModel != null) {
+            /*if (zoomModel != null) {
                 zoom = zoomModel!!.zoom * 1000
-            }
+            }*/
             pdfBookmarkManager?.bookmarkToRestore?.reflow = 1
         } else {
             zoom = pdfView?.zoom!! * 1000.0f
@@ -676,7 +663,6 @@ public class PDFViewActivity : MuPDFRecyclerViewActivity(), OnPageChangeListener
     }
 
     private fun showStyleFragment() {
-        //mZoomControls?.hide()
         mStyleControls?.visibility = View.VISIBLE
     }
 
@@ -685,8 +671,7 @@ public class PDFViewActivity : MuPDFRecyclerViewActivity(), OnPageChangeListener
     companion object {
 
         private const val TAG = "PDFViewActivity"
-        public const val TYPE_TITLE = 0
-        const val PREF_READER = "pref_reader"
+        const val PREF_READER = "pref_reader_barteksc"
         const val PREF_READER_KEY_FIRST = "pref_reader_key_first"
     }
 
@@ -702,7 +687,6 @@ public class PDFViewActivity : MuPDFRecyclerViewActivity(), OnPageChangeListener
                 }
                 TYPE_ZOOM -> {
                     mDrawerLayout.closeDrawer(mLeftDrawer)
-                    //mZoomControls?.show()
                     mStyleControls?.visibility = View.VISIBLE
                 }
                 TYPE_CLOSE -> {
@@ -716,5 +700,25 @@ public class PDFViewActivity : MuPDFRecyclerViewActivity(), OnPageChangeListener
             }
         }
 
+    }
+
+    private fun getbPageSize(pageNum: Int): Size {
+        val p = mDocument?.loadPage(pageNum)
+        val b = p!!.getBounds()
+        val w = b.x1 - b.x0
+        val h = b.y1 - b.y0
+        val pointf = PointF(w, h)
+        p.destroy()
+        return Size(pointf.x.toInt(), pointf.y.toInt())
+    }
+
+    override fun preparePageSize(cp: Int) {
+        if (mReflow) {
+            return
+        }
+        for (i in 0 until cp) {
+            val size = getbPageSize(i)
+            originalPageSizes.add(size)
+        }
     }
 }
