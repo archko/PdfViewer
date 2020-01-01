@@ -5,6 +5,7 @@ import android.content.Intent
 import android.content.res.Configuration
 import android.graphics.Color
 import android.os.Bundle
+import android.os.SystemClock
 import android.preference.PreferenceManager
 import android.text.TextUtils
 import android.view.*
@@ -27,6 +28,7 @@ import cn.archko.pdf.listeners.DataListener
 import cn.archko.pdf.listeners.MenuListener
 import cn.archko.pdf.listeners.OutlineListener
 import cn.archko.pdf.presenter.PageViewPresenter
+import cn.archko.pdf.utils.FileUtils
 import cn.archko.pdf.widgets.APageSeekBarControls
 import cn.archko.pdf.widgets.ViewerDividerItemDecoration
 import com.github.barteksc.pdfviewer.listener.*
@@ -64,7 +66,7 @@ public class PDFViewActivity : MuPDFRecyclerViewActivity(), OnPageChangeListener
     private var mStyleHelper: StyleHelper? = null
     var margin = 10
 
-    public override fun onCreate(savedInstanceState: Bundle?) {
+    override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState);
         if (TextUtils.isEmpty(mPath)) {
             return
@@ -146,6 +148,40 @@ public class PDFViewActivity : MuPDFRecyclerViewActivity(), OnPageChangeListener
         } finally {
             progressDialog.dismiss()
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        mPageSizes.let {
+            if (it.size() < 0) {
+                return
+            }
+            APageSizeLoader.savePageSizeToFile(mPageSizes,
+                    FileUtils.getDiskCacheDir(this@PDFViewActivity,
+                            pdfBookmarkManager?.bookmarkToRestore?.name))
+        }
+    }
+
+    override fun preparePageSize(cp: Int) {
+        var start = SystemClock.uptimeMillis()
+        val pageSizes = APageSizeLoader.loadPageSizeFromFile(mRecyclerView.width,
+                FileUtils.getDiskCacheDir(this@PDFViewActivity,
+                        pdfBookmarkManager?.bookmarkToRestore?.name))
+        Logcat.d("open3:" + (SystemClock.uptimeMillis() - start))
+
+        if (pageSizes != null && pageSizes.size() > 0) {
+            mPageSizes = pageSizes
+        } else {
+            start = SystemClock.uptimeMillis()
+            super.preparePageSize(cp)
+            Logcat.d("open2:" + (SystemClock.uptimeMillis() - start))
+        }
+        //if (mReflow) {
+        //    return
+        //}
+        //for (i in 0 until cp) {
+        //    val size = getPageSize(i)
+        //}
     }
 
     private fun loadFromUri() {
@@ -698,15 +734,5 @@ public class PDFViewActivity : MuPDFRecyclerViewActivity(), OnPageChangeListener
             }
         }
 
-    }
-
-    override fun preparePageSize(cp: Int) {
-        //if (mReflow) {
-        //    return
-        //}
-        //for (i in 0 until cp) {
-        //    val size = getPageSize(i)
-        //}
-        super.preparePageSize(cp)
     }
 }
