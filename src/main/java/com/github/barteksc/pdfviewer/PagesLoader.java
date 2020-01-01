@@ -298,8 +298,8 @@ class PagesLoader {
 
     private void loadThumbnail(int page) {
         SizeF pageSize = pdfView.pdfFile.getPageSize(page);
-        float thumbnailWidth = pageSize.getWidth()/* * Constants.THUMBNAIL_RATIO*/;
-        float thumbnailHeight = pageSize.getHeight() /** Constants.THUMBNAIL_RATIO*/;
+        float thumbnailWidth = pageSize.getWidth() * Constants.THUMBNAIL_RATIO;
+        float thumbnailHeight = pageSize.getHeight() * Constants.THUMBNAIL_RATIO;
         if (!pdfView.cacheManager.containsThumbnail(page, thumbnailRect)) {
             pdfView.renderingHandler.addRenderingTask(page,
                     thumbnailWidth, thumbnailHeight, thumbnailRect,

@@ -34,6 +34,7 @@ import android.os.Build;
 import android.os.HandlerThread;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.util.SparseArray;
 import android.widget.RelativeLayout;
 
 import com.artifex.mupdf.fitz.Document;
@@ -71,7 +72,6 @@ import com.github.barteksc.pdfviewer.util.Util;
 //import com.shockwave.pdfium.util.Size;
 //import com.shockwave.pdfium.util.SizeF;
 
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -80,6 +80,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import cn.archko.pdf.entity.APage;
 import cn.archko.pdf.pdf.MupdfDocument;
 
 /**
@@ -337,7 +338,7 @@ public class PDFView extends RelativeLayout {
         decodingAsyncTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
     }
 
-    private void load(int[] userPages, List<Size> originalPageSizes, Document document) {
+    private void load(int[] userPages, SparseArray<APage> pageSizes, Document document) {
         if (!recycled) {
             loadError(new IllegalStateException("Don't call load on a PDF View without recycling it first."));
             return;
@@ -346,7 +347,7 @@ public class PDFView extends RelativeLayout {
         recycled = false;
 
         pdfiumCore.setDocument(document);
-        PdfFile pdfFile = new PdfFile(pdfiumCore, originalPageSizes, getPageFitPolicy(), new Size(getWidth(), getHeight()),
+        PdfFile pdfFile = new PdfFile(pdfiumCore, pageSizes, getPageFitPolicy(), new Size(getWidth(), getHeight()),
                 userPages, isSwipeVertical(), getSpacingPx(), isAutoSpacingEnabled(),
                 isFitEachPage());
         loadComplete(pdfFile);
@@ -1498,7 +1499,7 @@ public class PDFView extends RelativeLayout {
 
         private boolean crop = true;
 
-        private List<Size> originalPageSizes;
+        private SparseArray<APage> mPageSizes;
         private Document mDocument;
 
         private Configurator(DocumentSource documentSource) {
@@ -1645,8 +1646,8 @@ public class PDFView extends RelativeLayout {
             return this;
         }
 
-        public Configurator setOriginalPageSizes(List<Size> originalPageSizes) {
-            this.originalPageSizes = originalPageSizes;
+        public Configurator setPageSizes(SparseArray<APage> pageSizes) {
+            this.mPageSizes = pageSizes;
             return this;
         }
 
@@ -1693,8 +1694,8 @@ public class PDFView extends RelativeLayout {
             PDFView.this.setPageFling(pageFling);
             PDFView.this.setAutoCrop(crop);
 
-            if (null != originalPageSizes && originalPageSizes.size() > 0) {
-                PDFView.this.load(pageNumbers, originalPageSizes, mDocument);
+            if (null != mPageSizes && mPageSizes.size() > 0 && mDocument != null) {
+                PDFView.this.load(pageNumbers, mPageSizes, mDocument);
                 return;
             }
             if (pageNumbers != null) {

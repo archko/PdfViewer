@@ -18,6 +18,7 @@ package com.github.barteksc.pdfviewer;
 import android.graphics.Bitmap;
 import android.graphics.PointF;
 import android.graphics.Rect;
+import android.util.SparseArray;
 import android.util.SparseBooleanArray;
 
 import com.artifex.mupdf.fitz.Document;
@@ -32,6 +33,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import cn.archko.pdf.entity.APage;
 import cn.archko.pdf.pdf.MupdfDocument;
 
 class PdfFile {
@@ -40,7 +42,7 @@ class PdfFile {
     //private PdfDocument pdfDocument;
     private MupdfDocument pdfiumCore;
     private int pagesCount = 0;
-    List<Size> aPageSizes;
+    SparseArray<APage> aPageSizes;
     /**
      * Original page sizes
      */
@@ -131,7 +133,7 @@ class PdfFile {
      * @param autoSpacing
      * @param fitEachPage
      */
-    PdfFile(MupdfDocument pdfiumCore, List<Size> pageSizes, FitPolicy pageFitPolicy, Size viewSize, int[] originalUserPages,
+    PdfFile(MupdfDocument pdfiumCore, SparseArray<APage> pageSizes, FitPolicy pageFitPolicy, Size viewSize, int[] originalUserPages,
             boolean isVertical, int spacing, boolean autoSpacing, boolean fitEachPage) {
         this.pdfiumCore = pdfiumCore;
         this.pageFitPolicy = pageFitPolicy;
@@ -141,7 +143,7 @@ class PdfFile {
         this.autoSpacing = autoSpacing;
         this.fitEachPage = fitEachPage;
         aPageSizes = pageSizes;
-        setupWithPageSize(viewSize);
+        setupWithAPageSize(viewSize);
     }
 
     private void setup(Size viewSize) {
@@ -166,11 +168,20 @@ class PdfFile {
         recalculatePageSizes(viewSize);
     }
 
-    private void setupWithPageSize(Size viewSize) {
+    /**
+     * apage,may contain a crop page.
+     * loading document with crop page would take a longer time.
+     * and after that recalculate size ,offsets with crop page.
+     * recalculatePageSizes(),prepareAutoSpacing(),prepareDocLen(),preparePagesOffset(),will be override
+     *
+     * @param viewSize
+     */
+    private void setupWithAPageSize(Size viewSize) {
         pagesCount = aPageSizes.size();
 
         for (int i = 0; i < pagesCount; i++) {
-            Size pageSize = aPageSizes.get(i);
+            APage aPage = aPageSizes.get(i);
+            Size pageSize = new Size((int) aPage.getPageSize().x, (int) aPage.getPageSize().y);
             if (pageSize.getWidth() > originalMaxWidthPageSize.getWidth()) {
                 originalMaxWidthPageSize = pageSize;
             }

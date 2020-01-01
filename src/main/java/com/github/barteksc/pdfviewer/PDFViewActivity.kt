@@ -4,7 +4,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
 import android.graphics.Color
-import android.graphics.PointF
 import android.os.Bundle
 import android.preference.PreferenceManager
 import android.text.TextUtils
@@ -32,7 +31,7 @@ import cn.archko.pdf.widgets.APageSeekBarControls
 import cn.archko.pdf.widgets.ViewerDividerItemDecoration
 import com.github.barteksc.pdfviewer.listener.*
 import com.github.barteksc.pdfviewer.scroll.DefaultScrollHandle
-import com.github.barteksc.pdfviewer.util.Size
+import org.vudroid.core.models.ZoomModel
 import java.io.File
 
 public class PDFViewActivity : MuPDFRecyclerViewActivity(), OnPageChangeListener, OnLoadCompleteListener,
@@ -62,7 +61,6 @@ public class PDFViewActivity : MuPDFRecyclerViewActivity(), OnPageChangeListener
     private var mFgSetting: View? = null
     private var colorPickerDialog: ColorPickerDialog? = null
 
-    private val originalPageSizes = ArrayList<Size>()
     private var mStyleHelper: StyleHelper? = null
     var margin = 10
 
@@ -124,6 +122,7 @@ public class PDFViewActivity : MuPDFRecyclerViewActivity(), OnPageChangeListener
         } else {
             margin = (margin * 0.03).toInt()
         }
+        zoomModel = ZoomModel()
     }
 
     override fun loadDoc() {
@@ -136,9 +135,8 @@ public class PDFViewActivity : MuPDFRecyclerViewActivity(), OnPageChangeListener
 
             if (mReflow) {
                 addGesture()
-            } else {
-                loadFromUri()
             }
+            loadFromUri()
 
             isDocLoaded = true
         } catch (e: Exception) {
@@ -163,12 +161,12 @@ public class PDFViewActivity : MuPDFRecyclerViewActivity(), OnPageChangeListener
                 .enableAnnotationRendering(true)
                 .onLoad(this)
                 .scrollHandle(DefaultScrollHandle(this))
-                .spacing(10) // in dp
+                .spacing(2) // in dp
                 .onPageError(this)
                 .onTap(onTapListener)
                 .crop(autoCrop)
                 .onError(this)
-                .setOriginalPageSizes(originalPageSizes)
+                .setPageSizes(mPageSizes)
                 .setDocument(mDocument)
                 .load();
     }
@@ -274,7 +272,7 @@ public class PDFViewActivity : MuPDFRecyclerViewActivity(), OnPageChangeListener
         }
     }
 
-    var onTapListener = object : OnTapListener {
+    private var onTapListener = object : OnTapListener {
         override fun onTap(e: MotionEvent): Boolean {
             val height = getViewHeight()
             var scrollY = getScrollY()
@@ -702,23 +700,13 @@ public class PDFViewActivity : MuPDFRecyclerViewActivity(), OnPageChangeListener
 
     }
 
-    private fun getbPageSize(pageNum: Int): Size {
-        val p = mDocument?.loadPage(pageNum)
-        val b = p!!.getBounds()
-        val w = b.x1 - b.x0
-        val h = b.y1 - b.y0
-        val pointf = PointF(w, h)
-        p.destroy()
-        return Size(pointf.x.toInt(), pointf.y.toInt())
-    }
-
     override fun preparePageSize(cp: Int) {
-        if (mReflow) {
-            return
-        }
-        for (i in 0 until cp) {
-            val size = getbPageSize(i)
-            originalPageSizes.add(size)
-        }
+        //if (mReflow) {
+        //    return
+        //}
+        //for (i in 0 until cp) {
+        //    val size = getPageSize(i)
+        //}
+        super.preparePageSize(cp)
     }
 }
