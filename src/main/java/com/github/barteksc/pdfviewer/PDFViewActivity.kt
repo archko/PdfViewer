@@ -8,6 +8,7 @@ import android.os.Bundle
 import android.os.SystemClock
 import android.preference.PreferenceManager
 import android.text.TextUtils
+import android.util.SparseArray
 import android.view.*
 import android.widget.RelativeLayout
 import android.widget.SeekBar
@@ -21,6 +22,7 @@ import cn.archko.pdf.activities.PdfOptionsActivity
 import cn.archko.pdf.adapters.MuPDFReflowAdapter
 import cn.archko.pdf.colorpicker.ColorPickerDialog
 import cn.archko.pdf.common.*
+import cn.archko.pdf.entity.APage
 import cn.archko.pdf.entity.FontBean
 import cn.archko.pdf.entity.MenuBean
 import cn.archko.pdf.fragments.FontsFragment
@@ -158,7 +160,7 @@ public class PDFViewActivity : MuPDFRecyclerViewActivity(), OnPageChangeListener
             if (it.size() < 0 || (it.size() < APageSizeLoader.PAGE_COUNT)) {
                 return
             }
-            APageSizeLoader.savePageSizeToFile(mPageSizes,
+            APageSizeLoader.savePageSizeToFile(false, mPageSizes,
                     FileUtils.getDiskCacheDir(this@PDFViewActivity,
                             pdfBookmarkManager?.bookmarkToRestore?.name))
         }
@@ -168,12 +170,16 @@ public class PDFViewActivity : MuPDFRecyclerViewActivity(), OnPageChangeListener
         val width = mRecyclerView.width
         doAsync {
             var start = SystemClock.uptimeMillis()
-            val pageSizes = APageSizeLoader.loadPageSizeFromFile(width,
+            val pageSizeBean = APageSizeLoader.loadPageSizeFromFile(width,
                     FileUtils.getDiskCacheDir(this@PDFViewActivity,
                             pdfBookmarkManager?.bookmarkToRestore?.name))
             Logcat.d("open3:" + (SystemClock.uptimeMillis() - start))
 
             uiThread {
+                var pageSizes: SparseArray<APage>? = null;
+                if (pageSizeBean != null) {
+                    pageSizes = pageSizeBean.sparseArray;
+                }
                 if (pageSizes != null && pageSizes.size() > 0 && !autoCrop) {
                     mPageSizes = pageSizes
                 } else {
