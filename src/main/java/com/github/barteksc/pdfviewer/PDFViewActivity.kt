@@ -33,6 +33,8 @@ import cn.archko.pdf.widgets.APageSeekBarControls
 import cn.archko.pdf.widgets.ViewerDividerItemDecoration
 import com.github.barteksc.pdfviewer.listener.*
 import com.github.barteksc.pdfviewer.scroll.DefaultScrollHandle
+import org.jetbrains.anko.doAsync
+import org.jetbrains.anko.uiThread
 import org.vudroid.core.models.ZoomModel
 import java.io.File
 
@@ -153,7 +155,7 @@ public class PDFViewActivity : MuPDFRecyclerViewActivity(), OnPageChangeListener
     override fun onDestroy() {
         super.onDestroy()
         mPageSizes.let {
-            if (it.size() < 0) {
+            if (it.size() < 0 || (it.size() < APageSizeLoader.PAGE_COUNT)) {
                 return
             }
             APageSizeLoader.savePageSizeToFile(mPageSizes,
@@ -163,18 +165,23 @@ public class PDFViewActivity : MuPDFRecyclerViewActivity(), OnPageChangeListener
     }
 
     override fun preparePageSize(cp: Int) {
-        var start = SystemClock.uptimeMillis()
-        val pageSizes = APageSizeLoader.loadPageSizeFromFile(mRecyclerView.width,
-                FileUtils.getDiskCacheDir(this@PDFViewActivity,
-                        pdfBookmarkManager?.bookmarkToRestore?.name))
-        Logcat.d("open3:" + (SystemClock.uptimeMillis() - start))
+        val width = mRecyclerView.width
+        doAsync {
+            var start = SystemClock.uptimeMillis()
+            val pageSizes = APageSizeLoader.loadPageSizeFromFile(width,
+                    FileUtils.getDiskCacheDir(this@PDFViewActivity,
+                            pdfBookmarkManager?.bookmarkToRestore?.name))
+            Logcat.d("open3:" + (SystemClock.uptimeMillis() - start))
 
-        if (pageSizes != null && pageSizes.size() > 0) {
-            mPageSizes = pageSizes
-        } else {
-            start = SystemClock.uptimeMillis()
-            super.preparePageSize(cp)
-            Logcat.d("open2:" + (SystemClock.uptimeMillis() - start))
+            uiThread {
+                if (pageSizes != null && pageSizes.size() > 0 && !autoCrop) {
+                    mPageSizes = pageSizes
+                } else {
+                    start = SystemClock.uptimeMillis()
+                    super.preparePageSize(cp)
+                    Logcat.d("open2:" + (SystemClock.uptimeMillis() - start))
+                }
+            }
         }
         //if (mReflow) {
         //    return
