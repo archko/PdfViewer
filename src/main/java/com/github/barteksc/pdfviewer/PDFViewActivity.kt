@@ -77,7 +77,7 @@ public class PDFViewActivity : MuPDFRecyclerViewActivity(), OnPageChangeListener
         }
         mPageSeekBarControls?.updateTitle(mPath)
 
-        autoCrop = PreferenceManager.getDefaultSharedPreferences(this).getBoolean(PdfOptionsActivity.PREF_AUTOCROP, true)
+        crop = PreferenceManager.getDefaultSharedPreferences(this).getBoolean(PdfOptionsActivity.PREF_AUTOCROP, true)
     }
 
     override fun initView() {
@@ -181,7 +181,7 @@ public class PDFViewActivity : MuPDFRecyclerViewActivity(), OnPageChangeListener
                 if (pageSizeBean != null) {
                     pageSizes = pageSizeBean.sparseArray;
                 }
-                if (pageSizes != null && pageSizes.size() > 0 && !autoCrop) {
+                if (pageSizes != null && pageSizes.size() > 0 && !crop) {
                     mPageSizes = pageSizes
                 } else {
                     start = SystemClock.uptimeMillis()
@@ -201,7 +201,7 @@ public class PDFViewActivity : MuPDFRecyclerViewActivity(), OnPageChangeListener
     private fun loadFromUri() {
         setupView()
 
-        autoCropModeSet(autoCrop)
+        autoCropModeSet(crop)
         val pos = pdfBookmarkManager?.getBookmark()!!
 
         pdfView!!.zoomTo(pdfBookmarkManager!!.getBookmarkToRestore().zoomLevel / 1000f)
@@ -214,7 +214,7 @@ public class PDFViewActivity : MuPDFRecyclerViewActivity(), OnPageChangeListener
                 .spacing(2) // in dp
                 .onPageError(this)
                 .onTap(onTapListener)
-                .crop(autoCrop)
+                .crop(crop)
                 .onError(this)
                 .setPageSizes(mPageSizes)
                 .setDocument(mDocument)
@@ -466,11 +466,11 @@ public class PDFViewActivity : MuPDFRecyclerViewActivity(), OnPageChangeListener
     }
 
     private fun toggleAutoCrop() {
-        val flag = autoCropModeSet(!autoCrop)
+        val flag = autoCropModeSet(!crop)
         if (flag) {
-            autoCrop = !autoCrop;
+            crop = !crop;
         }
-        pdfView?.setAutoCrop(autoCrop)
+        pdfView?.setAutoCrop(crop)
     }
 
     private fun autoCropModeSet(autoCrop: Boolean): Boolean {
@@ -546,7 +546,7 @@ public class PDFViewActivity : MuPDFRecyclerViewActivity(), OnPageChangeListener
 
     override fun onPause() {
         super.onPause()
-        if (autoCrop) {
+        if (crop) {
             pdfBookmarkManager?.bookmarkToRestore?.autoCrop = 0
         } else {
             pdfBookmarkManager?.bookmarkToRestore?.autoCrop = 1
