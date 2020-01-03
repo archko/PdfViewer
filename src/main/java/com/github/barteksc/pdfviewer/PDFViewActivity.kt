@@ -164,6 +164,7 @@ public class PDFViewActivity : MuPDFRecyclerViewActivity(), OnPageChangeListener
                     FileUtils.getDiskCacheDir(this@PDFViewActivity,
                             pdfBookmarkManager?.bookmarkToRestore?.name))
         }
+        pdfView?.recycle()
     }
 
     override fun preparePageSize(cp: Int) {
